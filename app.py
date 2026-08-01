@@ -21,6 +21,7 @@ import logging
 
 # Use new OOP structure
 from utils.state import STATE
+from state import NumpyJSONProvider  # noqa: F401  (root state.py — JSON provider for numpy types)
 from utils.console import banner, info, ok, warn, err
 from core.processor import start_detection_thread, resolve_device, _mlx_available
 from config import UPLOADS_DIR
