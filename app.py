@@ -14,6 +14,7 @@ Serveur Flask minimal. Démarre le thread de détection et expose:
 """
 import argparse
 import os
+import sys
 
 from flask import Flask, Response, jsonify, render_template, request, send_from_directory
 from werkzeug.utils import secure_filename
@@ -73,7 +74,8 @@ def parse_args():
     _has_mlx_model = _os.path.exists(
         _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "yolo26s-seg.safetensors")
     )
-    _default_yolo = "yolo26s-seg.safetensors" if _has_mlx_model else "yolo11s-seg.pt"
+    _mlx_requested = "--mlx" in sys.argv
+    _default_yolo = "yolo26s-seg.safetensors" if (_has_mlx_model and _mlx_requested) else "yolo11s-seg.pt"
     p.add_argument("--yolo-model", type=str, default=_default_yolo,
                    help="YOLO recommandé: yolo26s-seg.safetensors (MLX/Metal, Apple Silicon) "
                         "ou yolo11s-seg.pt (PyTorch, CUDA/CPU).")
@@ -237,7 +239,7 @@ def list_devices():
     available = []
     gpus = []
     # MLX sur Apple Silicon (Metal GPU) — priorité maximale
-    if STATE["device"] == "mlx" or _mlx_available():
+    if STATE["device"] == "mlx" or _mlx_available:
         available.append("mlx")
         gpus.append({"index": 0, "id": "mlx", "name": "Apple Metal GPU (MLX)"})
     # CUDA
@@ -734,7 +736,7 @@ def main():
         f"webcam ({args.source})" if str(args.source).isdigit()
         else os.path.basename(args.source)
     )
-    log_banner(
+    banner(
         "BOEUF TRACKER — Interface web",
         [
             f"URL       : http://{args.host}:{args.port}",
@@ -748,7 +750,18 @@ def main():
             f"grace={args.loop_grace_frames}f  max-upd={args.max_updates}",
         ],
     )
-    start_detection_thread(args)
+    start_detection_thread(
+        source=args.source,
+        yolo_model=args.yolo_model,
+        dino_model=args.dino_model,
+        threshold=args.threshold,
+        conf=args.conf,
+        device=args.device,
+        mlx=getattr(args, "mlx", False),
+        loop_threshold=args.loop_threshold,
+        loop_grace_frames=args.loop_grace_frames,
+        max_updates=args.max_updates,
+    )
     # Coupe le spam du access-log werkzeug (sinon le polling /video_feed a ~25 Hz
     # inonde la console : "GET /video_feed?t=... HTTP/1.1 200 -" a chaque frame).
     # On garde ERROR pour voir passer les vraies erreurs serveur.

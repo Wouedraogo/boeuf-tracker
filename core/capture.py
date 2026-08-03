@@ -30,7 +30,7 @@ class CaptureManager:
             # Try DirectShow before MSMF on Windows (more stable for webcam)
             for backend in (cv2.CAP_DSHOW, cv2.CAP_MSMF, cv2.CAP_ANY):
                 try:
-                    cap = cv2.VideoCapture(self.source, backend)
+                    cap = cv2.VideoCapture(self.source, backend, [])
                     if cap.isOpened():
                         ok_, _ = cap.read()
                         if ok_:
@@ -40,7 +40,7 @@ class CaptureManager:
                 except Exception:
                     pass
             return False
-        self.cap = cv2.VideoCapture(self.source)
+        self.cap = cv2.VideoCapture(self.source, cv2.CAP_ANY, [])
         return self.cap.isOpened()
 
     def read(self) -> tuple[bool, ...]:
@@ -122,7 +122,7 @@ def open_capture(src):
     if isinstance(src, int):
         for backend in (cv2.CAP_DSHOW, cv2.CAP_MSMF, cv2.CAP_ANY):
             try:
-                cap = cv2.VideoCapture(src, backend)
+                cap = cv2.VideoCapture(src, backend, [])
                 if cap.isOpened():
                     ok_, _ = cap.read()
                     if ok_:
@@ -131,7 +131,7 @@ def open_capture(src):
             except Exception:
                 pass
         return None
-    cap = cv2.VideoCapture(src)
+    cap = cv2.VideoCapture(src, cv2.CAP_ANY, [])
     return cap if cap.isOpened() else None
 
 

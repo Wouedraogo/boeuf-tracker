@@ -336,7 +336,7 @@ refreshStats();
 // ─── Polling JPEG du flux vidéo (~25 fps) ───────────────────────
 const streamImg = $('stream');
 let streamTimer = null;
-function refreshStream() {  }
+function refreshStream() { streamImg.src = '/video_feed?t=' + Date.now(); }
 streamImg.addEventListener('load', () => { clearTimeout(streamTimer); streamTimer = setTimeout(refreshStream, 40); });
 streamImg.addEventListener('error', () => { clearTimeout(streamTimer); streamTimer = setTimeout(refreshStream, 500); });
 refreshStream();

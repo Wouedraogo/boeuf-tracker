@@ -121,6 +121,14 @@ def annotate_frame(annotated, masks_data, det_idx, x1, y1, x2, y2, color):
         mask = masks_data[det_idx]
         if mask is not None:
             color_array = np.array(color, dtype=np.uint8)
+            if hasattr(mask, "cpu"):
+                mask = mask.cpu().numpy()
+            if mask.shape[:2] != annotated.shape[:2]:
+                mask = cv2.resize(
+                    mask.astype(np.uint8),
+                    (annotated.shape[1], annotated.shape[0]),
+                    interpolation=cv2.INTER_NEAREST,
+                )
             mask_bool = mask.astype(bool)
             annotated[mask_bool] = annotated[mask_bool] * 0.6 + color_array * 0.4
             return
@@ -358,7 +366,7 @@ class VideoProcessor:
                     continue
 
                 # Encode for streaming
-                _, jpg = cv2.imencode(".jpg", frame, [cv2.IMPORTANCE, 85])
+                _, jpg = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
                 with STATE["frame_lock"]:
                     STATE["frame_jpg"] = jpg.tobytes()
 

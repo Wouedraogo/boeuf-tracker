@@ -28,7 +28,7 @@ trap cleanup EXIT INT TERM
 
 # 1. Worker Python (port 8100)
 log "Démarrage worker Python (port 8100)..."
-PYTHON_ARGS="${@:---mlx}"
+PYTHON_ARGS="$@"
 source .venv/bin/activate 2>/dev/null || true
 python app.py $PYTHON_ARGS --port 8100 &
 PYTHON_PID=$!

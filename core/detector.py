@@ -81,6 +81,8 @@ class CattleDetectorMLX:
     ~2.6× faster than YOLO11s on PyTorch MPS for Apple Silicon.
     """
 
+    COW_CLASS_ID = 19  # COCO: 'cow'
+
     def __init__(
         self,
         model_name: str = "yolo26s-seg.safetensors",

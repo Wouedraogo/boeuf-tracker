@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "boeuf-web",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["dev.sh"],
+      "port": 8000
+    }
+  ]
+}
