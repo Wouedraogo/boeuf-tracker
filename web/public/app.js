@@ -96,7 +96,11 @@ async function refreshStats() {
             }
         }
 
-        if (sourceLabel !== lastSource) { refreshStream(); lastSource = sourceLabel; }
+        if (sourceLabel !== lastSource) {
+            lastSource = sourceLabel;
+            if (sourceLabel && sourceLabel !== '--') refreshStream();
+        }
+        if (!streamActive && sourceLabel && sourceLabel !== '--' && data.frame_count > 0) refreshStream();
 
         if (!switchingDevice && data.device && $('device-select').value !== data.device) {
             const opts = Array.from($('device-select').options).map(o => o.value);
@@ -331,12 +335,69 @@ async function pushSetting(payload) {
     finally { pushInFlight = false; }
 }
 
-$('setting-model').addEventListener('change', (e) => pushSetting({ yolo_model: e.target.value }));
+// ─── Auto-switch CoreML ↔ imgsz ────────────────────────────────
+// Le .mlpackage a une input shape figée à l'export. On expose deux variantes
+// par archi (yolo26{s,m}-seg-640/1280.mlpackage) et on aligne modèle ↔
+// résolution : le couple reste toujours cohérent (-640 lancé à 1280 = upscale
+// inutile → évité). L'archi choisie (s ou m) est CONSERVEE lors du switch.
+const CORE_ML_SIZES = [640, 1280];
+const CORE_ML_RE = /^(yolo26[sm]-seg)-(\d+)\.mlpackage$/;
+function coreMlSizeFromName(name) {
+    if (!name) return null;
+    const m = name.match(CORE_ML_RE);
+    return m ? parseInt(m[2], 10) : null;
+}
+function coreMlArchFromName(name) {
+    // Retourne "yolo26s-seg" ou "yolo26m-seg" (ou null si pas CoreML).
+    if (!name) return null;
+    const m = name.match(CORE_ML_RE);
+    return m ? m[1] : null;
+}
+function coreMlNameFor(arch, size) { return `${arch}-${size}.mlpackage`; }
+function nearestCoreMlSize(size) {
+    // Cran demandé → variante ≥ dispo, sinon la plus grande.
+    // 320/416/640 → 640 ; 960/1280 → 1280.
+    return CORE_ML_SIZES.find(s => s >= size) ?? CORE_ML_SIZES[CORE_ML_SIZES.length - 1];
+}
+function isCoreMlModel(name) { return coreMlSizeFromName(name) != null; }
+function setActiveImgszBtn(size) {
+    document.querySelectorAll('[data-imgsz]').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.imgsz) === size);
+    });
+}
+
+$('setting-model').addEventListener('change', (e) => {
+    const model = e.target.value;
+    const size = coreMlSizeFromName(model);
+    if (size != null) {
+        // CoreML choisi → on aligne l'imgsz sur la taille figée du modèle.
+        setActiveImgszBtn(size);
+        pushSetting({ yolo_model: model, imgsz: size });
+    } else {
+        pushSetting({ yolo_model: model });
+    }
+});
+
 document.querySelectorAll('[data-imgsz]').forEach(btn => {
     btn.addEventListener('click', () => {
-        document.querySelectorAll('[data-imgsz]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        pushSetting({ imgsz: parseInt(btn.dataset.imgsz) });
+        const size = parseInt(btn.dataset.imgsz);
+        setActiveImgszBtn(size);
+        // Si le modèle courant est un CoreML, on switche aussi vers la
+        // variante correspondante (sinon on tournerait à la mauvaise shape).
+        // On PRESERVE l'archi (s ou m) — on ne rebascule pas de m vers s.
+        const curModel = $('setting-model').value;
+        const arch = coreMlArchFromName(curModel);
+        if (arch) {
+            const target = nearestCoreMlSize(size);
+            const targetName = coreMlNameFor(arch, target);
+            if (targetName !== curModel) {
+                $('setting-model').value = targetName;
+                setActiveImgszBtn(target);
+                pushSetting({ yolo_model: targetName, imgsz: target });
+                return;
+            }
+        }
+        pushSetting({ imgsz: size });
     });
 });
 $('setting-embed').addEventListener('input', (e) => { $('setting-embed-val').textContent = e.target.value; });
@@ -360,12 +421,17 @@ setInterval(refreshStats, 1000);
 refreshStats();
 
 // ─── Polling JPEG du flux vidéo (~25 fps) ───────────────────────
+// Ne commence le polling que quand une source est active (évite les
+// GET /video_feed inutiles à l'ouverture de la page).
 const streamImg = $('stream');
 let streamTimer = null;
-function refreshStream() { streamImg.src = '/video_feed?t=' + Date.now(); }
+let streamActive = false;
+function refreshStream() {
+    streamActive = true;
+    streamImg.src = '/video_feed?t=' + Date.now();
+}
 streamImg.addEventListener('load', () => { clearTimeout(streamTimer); streamTimer = setTimeout(refreshStream, 40); });
 streamImg.addEventListener('error', () => { clearTimeout(streamTimer); streamTimer = setTimeout(refreshStream, 500); });
-refreshStream();
 
 // ═══════════════════════════════════════════════════════════════
 //  DASHBOARD — Charts (Chart.js) + Heatmap (Canvas) + Timeline

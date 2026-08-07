@@ -13,6 +13,8 @@ env/
 *.pt
 *.pth
 *.onnx
+*.mlpackage
+*.mlmodelc
 *.pkl
 *.npz
 names_counter.json

@@ -1,0 +1,35 @@
+name: BoeufInference
+options:
+  bundleIdPrefix: com.boeuftracker
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    ENABLE_HARDENED_RUNTIME: YES
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+    PRODUCT_NAME: "$(TARGET_NAME)"
+    GENERATE_INFOPLIST_FILE: YES
+    INFOPLIST_KEY_NSHumanReadableCopyright: ""
+    INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.video"
+    INFOPLIST_KEY_NSMainStoryboardFile: ""
+    INFOPLIST_KEY_NSPrincipalClass: "NSApplication"
+    INFOPLIST_KEY_UILaunchStoryboardName: ""
+targets:
+  BoeufInference:
+    type: application
+    platform: macOS
+    sources:
+      - path: BoeufInference
+        excludes:
+          - "**/*.entitlements"
+          - "Models/**"
+      - path: BoeufInference/Models
+        buildPhase: resources
+    settings:
+      base:
+        CODE_SIGN_ENTITLEMENTS: BoeufInference/BoeufInference.entitlements
+        PRODUCT_BUNDLE_IDENTIFIER: com.boeuftracker.BoeufInference

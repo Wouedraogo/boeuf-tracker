@@ -6,7 +6,6 @@ Benchmark des optimisations du pipeline cattle-tracker.
 Mesure:
 1. database.match() loop vs vectorisé (vary N animaux)
 2. database.match() avec reid_engine (compare pondéré DINO/HSV/LBP)
-3. analyze_behavior() avant/après Numba JIT
 
 Le benchmark DINOv2 batch vs single est optionnel (--with-dino) car il
 charge le modèle (~3s + 500MB RAM).
@@ -105,37 +104,6 @@ def bench_match_reid(n_animals: int, n_iters: int = 2000):
     return t_loop, t_vec
 
 
-def bench_analyze_behavior(n_tracks: int = 5, n_iters: int = 500):
-    """Mesure analyze_behavior (Numba JIT warm-up inclus)."""
-    from state import STATE
-    from processor import analyze_behavior
-
-    rng = np.random.default_rng(7)
-    boxes = rng.integers(100, 800, size=(n_tracks, 4)).astype(float)
-    boxes[:, 2] += 200
-    boxes[:, 3] += 200
-    track_ids = np.arange(1, n_tracks + 1)
-
-    # Pré-remplir STATE["track_history"] avec ~10 points par track
-    STATE["track_history"].clear()
-    t_base = time.time()
-    for tid in track_ids:
-        STATE["track_history"][int(tid)] = [
-            (float(rng.uniform(200, 600)), float(rng.uniform(200, 600)),
-             t_base - i * 0.5)
-            for i in range(10)
-        ]
-
-    # Warmup JIT (1er appel compile)
-    analyze_behavior(boxes, track_ids, time.time(), (1080, 1920))
-
-    # Mesure
-    t = time.perf_counter()
-    for _ in range(n_iters):
-        analyze_behavior(boxes, track_ids, time.time(), (1080, 1920))
-    return time.perf_counter() - t
-
-
 def bench_reid_batch(device: str = "cpu", n_crops: int = 4, n_iters: int = 20):
     """Compare N forwards MegaDescriptor individuels vs 1 forward batché.
     Optionnel, nécessite timm + torch (~3s load)."""
@@ -209,12 +177,7 @@ def main():
         print(f"{n:>6} | {t_loop*1000/2000:>14.4f} | {t_vec*1000/2000:>14.4f} | "
               f"{gain:>5.1f}x")
 
-    # 3) analyze_behavior (Numba JIT)
-    print("\n[3] analyze_behavior (Numba JIT)")
-    t = bench_analyze_behavior(n_tracks=5, n_iters=500)
-    print(f"5 tracks × 500 iters: {t*1000:.1f} ms total = {t*1000/500:.3f} ms/call")
-
-    # 4) MegaDescriptor batch vs single (optionnel) — CPU et GPU si dispo
+    # 3) MegaDescriptor batch vs single (optionnel) — CPU et GPU si dispo
     if args.with_reid:
         try:
             import torch

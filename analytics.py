@@ -236,16 +236,20 @@ class AnalyticsCollector:
             # On se base sur l'index dans la liste circulaire — on ajoute ce qui est nouveau
             current_events = state.get("events", [])
             for e in current_events:
+                # STATE["events"] devrait contenir des str, mais tolerer un dict
+                # qui aurait fuite d'un autre chemin (evite un crash silencieux
+                # visible en console : "dict has no attribute startswith").
+                msg = e if isinstance(e, str) else str(e.get("msg", e) if isinstance(e, dict) else e)
                 # Cle dedoublonnage simple
-                if not any(t["msg"] == e for t in self.state.timeline_events[-50:]):
-                    event_type = "NEW" if e.startswith("NEW") \
-                                 else "MATCH" if e.startswith("MATCH") \
-                                 else "CRASH" if e.startswith("CRASH") \
+                if not any(t["msg"] == msg for t in self.state.timeline_events[-50:]):
+                    event_type = "NEW" if msg.startswith("NEW") \
+                                 else "MATCH" if msg.startswith("MATCH") \
+                                 else "CRASH" if msg.startswith("CRASH") \
                                  else "INFO"
                     self.state.timeline_events.append({
                         "t": round(now - self.state.started_at, 1),
                         "type": event_type,
-                        "msg": e,
+                        "msg": msg,
                     })
 
     def push_detection(self, sample: DetectionSample):

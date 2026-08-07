@@ -156,6 +156,62 @@ class MegaDescriptorExtractor:
 
 
 # ─────────────────────────────────────────────────────────────────
+#  Deep backbone : MegaDescriptor CoreML (ANE)
+# ─────────────────────────────────────────────────────────────────
+class MegaDescriptorCoreML:
+    """MegaDescriptor sur le Neural Engine via CoreML (.mlpackage).
+
+    ~2-3x plus rapide que PyTorch MPS sur Apple Silicon.
+    Preprocessing (resize, normalize) fait en numpy — le modèle attend
+    un tenseur float16 [1, 3, 224, 224] déjà normalisé.
+    """
+
+    def __init__(self, mlpackage_path: str = "megadescriptor-t-224.mlpackage"):
+        import coremltools as ct
+
+        info(f"[MegaDescriptor-CoreML] Chargement de {mlpackage_path}...")
+        self.model = ct.models.MLModel(mlpackage_path)
+
+        spec = self.model.get_spec()
+        self._input_name = spec.description.input[0].name
+        self._output_name = spec.description.output[0].name
+
+        self.input_size = 224
+        self._mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
+        self._std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+
+        dummy = np.zeros((1, 3, self.input_size, self.input_size), dtype=np.float32)
+        out = self.model.predict({self._input_name: dummy})[self._output_name]
+        self.dim = int(np.array(out).flatten().shape[0])
+        ok(f"[MegaDescriptor-CoreML] Prêt (ANE, dim={self.dim})")
+
+    @staticmethod
+    def _crop_is_valid(crop_bgr: np.ndarray | None, min_side: int = 16) -> bool:
+        if crop_bgr is None or crop_bgr.size == 0:
+            return False
+        h, w = crop_bgr.shape[:2]
+        return h >= min_side and w >= min_side
+
+    def _preprocess(self, crop_bgr: np.ndarray) -> np.ndarray:
+        rgb = cv2.cvtColor(crop_bgr, cv2.COLOR_BGR2RGB)
+        resized = cv2.resize(rgb, (self.input_size, self.input_size))
+        arr = resized.astype(np.float32) / 255.0
+        arr = (arr - self._mean) / self._std
+        return arr.transpose(2, 0, 1)[np.newaxis]  # (1, 3, 224, 224)
+
+    def extract(self, crop_bgr: np.ndarray) -> np.ndarray | None:
+        if not self._crop_is_valid(crop_bgr):
+            return None
+        x = self._preprocess(crop_bgr)
+        out = self.model.predict({self._input_name: x})[self._output_name]
+        emb = np.array(out).flatten().astype(np.float32)
+        return emb / (np.linalg.norm(emb) + 1e-8)
+
+    def extract_batch(self, crops_bgr: list[np.ndarray]) -> list[np.ndarray | None]:
+        return [self.extract(c) for c in crops_bgr]
+
+
+# ─────────────────────────────────────────────────────────────────
 #  HSV histogram
 # ─────────────────────────────────────────────────────────────────
 class HSVHistExtractor:

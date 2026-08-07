@@ -12,8 +12,10 @@ Optimisations:
   nouveaux tracks d'une frame en UN seul forward.
 """
 import os
+import sys
 import time
 import threading
+import unicodedata
 from datetime import datetime
 
 import cv2
@@ -23,12 +25,46 @@ from PIL import Image
 
 from console import info, ok, warn, err, dbg, evt, loop as log_loop
 from behavior import (
-    BehaviorAnalyzer, EventJournal, IsolationMonitor, TransitionMonitor,
+    EventJournal, IsolationMonitor,
     NUMBA_OK as _NUMBA_OK,
 )
-from posture import MaskHeadAnalyzer, HeadMotionTracker, overlap_fractions
-from posture_model import PostureModel
+from posture import overlap_fractions
 from behavior_video import VideoBehavior
+
+# ─────────────────────────────────────────────────────────────
+#  Traduction EN -> FR des classes du classifieur d'action.
+#  Couvre les taxonomies rencontrees :
+#    - CVB (checkpoint historique, paturage)   : 8 classes
+#    - CBVD-5 (checkpoint barn, training/train_cbvd5.py) : 5 classes
+#    - X-CLIP (clefs directement FR via prompts) : identity
+# ─────────────────────────────────────────────────────────────
+_VIDEO_BEHAVIOR_FR = {
+    # ── CVB (paturage, 8 classes) ────────────────────────────
+    "grazing":              "pature",
+    "walking":               "marche",
+    "ruminating-standing":   "rumine debout",
+    "ruminating-lying":      "rumine couche",
+    "resting-standing":      "debout",
+    "resting-lying":         "couche",
+    "drinking":              "boit",
+    "running":               "court",
+    # ── CBVD-5 (barn, 5 classes) ─────────────────────────────
+    # foraging = mange (couvre auge/foin/pature au sens Nature 2024).
+    "standing":              "debout",
+    "lying":                 "couche",
+    "foraging":              "mange",
+    "rumination":            "rumine",
+    # "drinking" deja couvert plus haut.
+}
+# Sous ce seuil de softmax on n'affiche rien pour la posture. Sur 8 classes
+# le hasard est a 0.125 → 0.35 filtre le bruit mais laisse passer une majorite
+# franche. A remonter (0.50-0.60) si le modele s'avere sur-confiant sur ta video.
+_VIDEO_BEHAVIOR_MIN_CONF = 0.35
+
+# Dernier label emis par tid, pour tracer UNE ligne dans la console a chaque
+# changement (au lieu de spammer chaque frame). Diagnostic vivant : quand tu
+# vois "Amandine 2 -> couche (0.83)" ca confirme que le modele tourne.
+_last_beh_logged: dict[int, str] = {}
 
 # Marge de similarite requise pour retirer un nom a la piste qui le porte.
 # Trop bas -> les noms sautent d'une piste a l'autre ; trop haut -> le vrai
@@ -55,6 +91,18 @@ MIN_NEW_ID_AGE_FRAMES = 12
 # piste a un animal connu legerement different (angle, lumiere) que gonfler
 # le comptage avec un doublon.
 SECOND_CHANCE_DELTA = 0.10
+
+def _strip_accents(s: str) -> str:
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', s)
+        if unicodedata.category(c) != 'Mn'
+    )
+
+# Note: tout le lissage/hysteresis a ete retire. Le comportement provient
+# desormais uniquement du R(2+1)D (VideoBehavior) qui n'emet une prediction
+# que toutes les 16 frames sur un clip de 16 frames — le lissage est
+# intrinseque au modele, pas besoin d'une couche par-dessus.
+
 if not _NUMBA_OK:  # pragma: no cover
     warn("[Numba] non installé — JIT désactivé, comportement ×5-10 plus lent. "
          "pip install numba")
@@ -128,40 +176,49 @@ def annotate_frame(annotated, masks_data, det_idx, x1, y1, x2, y2, color):
 
 
 # ────────────────────────────────────────────────────────────────
-#  Pipeline comportement : instances singletons partagées par la boucle.
-#  Les state dicts sont référencés depuis STATE — mêmes objets, pas de copie.
+#  Pipeline comportement — 100 % modele (plus d'heuristique).
+#
+#  Le R(2+1)D-18 (behavior_video.pt) est desormais la SEULE source pour
+#  l'action affichee (pature, marche, couche, rumine...). Toutes les regles
+#  historiques (BehaviorClassifier + BehaviorTracker + MaskHeadAnalyzer +
+#  HeadMotionTracker + PostureModel) ont ete retirees : elles etaient la
+#  raison des faux "pature" sur un bovin couche, et exigeaient une
+#  re-calibration a chaque nouveau tournage.
+#
+#  EventJournal et IsolationMonitor restent : ils detectent des evenements
+#  spatiaux (nouveau bovin, isolement) — orthogonaux au probleme d'action.
 # ────────────────────────────────────────────────────────────────
 _journal = EventJournal(events_ref=STATE["events"])
-_analyzer = BehaviorAnalyzer(
-    track_history=STATE["track_history"],
-    track_names=STATE.setdefault("_track_names", {}),
-    head_down_flags=STATE.setdefault("_head_down", {}),
-    lying_flags=STATE.setdefault("_lying", {}),
-)
 _isolation = IsolationMonitor(journal=_journal)
-_transitions = TransitionMonitor(journal=_journal)
-# Posture : detection tete-au-sol depuis le masque + persistance temporelle
-_head_analyzer = MaskHeadAnalyzer()
-_head_motion = HeadMotionTracker()
-# Classifieur de posture appris (posture_clf.pkl). Absent au premier lancement :
-# _posture_model.ok == False et tout le pipeline reste sur les regles.
-_posture_model = PostureModel()
 
-# Comportement vidéo (R(2+1)D-18 entraîné sur CVB). Optionnel : si
-# behavior_video.pt est absent, _video_behavior.available == False et rien
-# ne change. En CPU par sécurité (la conv 3D plante sur MPS) + inférence
-# espacée (every=16) pour ne pas bloquer la boucle vidéo.
-_video_behavior = VideoBehavior(device="cpu", every=16)
+# Comportement — 2 backends interchangeables via --behavior-model :
+#   - "r2plus1d" (defaut) : R(2+1)D-18 entraine sur CVB, rapide, 8 classes figees.
+#   - "xclip"             : X-CLIP zero-shot, prompts modifiables sans re-training.
+#   - "none"              : desactive.
+# L'instance est cree APRES parse_args, dans start_detection_thread(), et injecte
+# via set_behavior_backend(). Ici on garde None jusqu'a l'init pour ne pas
+# charger le modele quand ce n'est pas necessaire (test, import).
+_video_behavior = None  # type: ignore[assignment]
 
 
-def analyze_behavior(boxes, track_ids, t_now, frame_shape=None):
-    """Wrapper stable pour callsites existants (bench_perf, boucle principale)."""
-    # Re-sync : STATE dicts peuvent être remplacés (reset_for_new_source)
-    _analyzer.track_history = STATE["track_history"]
-    _analyzer.track_names = STATE.get("_track_names", {})
-    _analyzer.head_down_flags = STATE.get("_head_down", {})
-    _analyzer.lying_flags = STATE.get("_lying", {})
-    return _analyzer.analyze(boxes, track_ids, t_now, frame_shape)
+def set_behavior_backend(kind: str) -> None:
+    """Instancie le classifieur d'action selon le flag --behavior-model.
+
+    Appelable une fois au demarrage. Recreable a chaud si besoin (nouveau
+    backend a la voile) — les buffers repartent a zero.
+    """
+    global _video_behavior
+    if kind == "r2plus1d":
+        _video_behavior = VideoBehavior(every=16)
+    elif kind == "xclip":
+        try:
+            from behavior_xclip import VideoBehaviorXClip
+            _video_behavior = VideoBehaviorXClip(every=16)
+        except Exception as e:
+            warn(f"[Behavior] X-CLIP indispo ({e}) — retombe sur R(2+1)D")
+            _video_behavior = VideoBehavior(every=16)
+    else:  # "none"
+        _video_behavior = None
 
 
 def push_user_event(kind: str, text: str, name: str | None = None) -> None:
@@ -175,11 +232,6 @@ def emit_isolation_alerts(boxes, track_ids, frame_shape) -> None:
         boxes, track_ids, frame_shape,
         track_names=STATE.get("_track_names", {}),
     )
-
-
-def emit_behavior_transitions(behaviors: list[dict]) -> None:
-    _transitions.journal.events_ref = STATE["events"]
-    _transitions.update(behaviors)
 
 
 def _mlx_available() -> bool:
@@ -274,6 +326,18 @@ def db_path_for_source(source) -> str:
 
 def detection_loop(args):
     """Boucle principale avec auto-recovery."""
+    # Si aucune source n'est fournie, on attend que l'utilisateur en choisisse
+    # une via l'UI (/api/source/file ou /api/source/webcam).
+    if not args.source:
+        ok("[Init] Aucune source — en attente d'une sélection via l'UI...")
+        STATE["source"] = ""
+        STATE["source_label"] = "en attente"
+        while not STATE.get("desired_source"):
+            time.sleep(0.5)
+        args.source = STATE["desired_source"]
+        STATE["desired_source"] = None
+        info(f"[Init] Source sélectionnée : {args.source}")
+
     source = int(args.source) if args.source.isdigit() else args.source
     STATE["source"] = str(source)
     STATE["current_source_path"] = source
@@ -334,19 +398,69 @@ def detection_loop(args):
                 pass
         reid_device = device
 
-    # Modèles
-    if use_mlx:
+    # Modèles — priorité : CoreML/ANE > MLX/Metal > PyTorch/MPS
+    # CoreML YOLO = ~2x plus rapide que MPS (ANE float16). L'input shape du
+    # .mlpackage est FIGE a l'export → on lit la taille dans le nom de fichier
+    # (yolo26s-seg-640.mlpackage / yolo26s-seg-1280.mlpackage) pour aligner
+    # args.imgsz. Le vieux yolo26s-seg.mlpackage (sans suffixe) est 640 par defaut.
+    import os as _os
+    _base = _os.path.dirname(_os.path.abspath(__file__))
+
+    def _coreml_imgsz_from_name(path: str) -> int:
+        """Deduit la taille d'input d'un .mlpackage a partir de son nom."""
+        import re
+        m = re.search(r"-(\d+)\.mlpackage/?$", path.rstrip("/"))
+        return int(m.group(1)) if m else 640
+
+    # On preferre le medium (m) au small (s) — meilleure segmentation en scene
+    # barn/troupeau serre au prix de ~2x le temps d'inference. A 1280 quand
+    # dispo (qualite), sinon 640, sinon l'ancien fichier sans suffixe.
+    _coreml_candidates = [
+        "yolo26m-seg-1280.mlpackage",
+        "yolo26m-seg-640.mlpackage",
+        "yolo26s-seg-1280.mlpackage",
+        "yolo26s-seg-640.mlpackage",
+        "yolo26s-seg.mlpackage",
+    ]
+    _yolo_coreml = next(
+        (_os.path.join(_base, c) for c in _coreml_candidates
+         if _os.path.isdir(_os.path.join(_base, c))),
+        None,
+    )
+    _use_coreml_yolo = (
+        sys.platform == "darwin"
+        and _yolo_coreml is not None
+        and args.yolo_model in ("yolo11s-seg.pt", "yolo11n-seg.pt",
+                                "yolo26s-seg.pt", "yolo26m-seg.pt",
+                                "yolo26s-seg.safetensors")
+    )
+
+    # Le nom du modele REELEMENT charge (peut differer de args.yolo_model quand
+    # l'auto-detection CoreML prend le dessus). C'est ce qu'on synchronise vers
+    # STATE pour que l'UI voie l'etat vrai et pas le CLI arg.
+    loaded_model_name: str
+    if _use_coreml_yolo:
+        _coreml_imgsz = _coreml_imgsz_from_name(_yolo_coreml)
+        ok(f"[Init] CoreML YOLO détecté → ANE ({_coreml_imgsz}x{_coreml_imgsz})")
+        detector = CattleDetector(
+            model_name=_yolo_coreml, device="cpu",
+            extra_classes=extra_classes,
+        )
+        args.imgsz = _coreml_imgsz
+        loaded_model_name = _os.path.basename(_yolo_coreml)
+    elif use_mlx:
         info(f"[YOLO26-MLX] Utilisation de CattleDetectorMLX...")
-        # When --mlx, use yolo26s-seg.safetensors (or the user-specified model)
         mlx_model = args.yolo_model if args.yolo_model != "yolo11s-seg.pt" else "yolo26s-seg.safetensors"
         detector = CattleDetectorMLX(
             model_name=mlx_model, device="mlx", extra_classes=extra_classes,
         )
+        loaded_model_name = mlx_model
     else:
         detector = CattleDetector(
             model_name=args.yolo_model, device=device,
             extra_classes=extra_classes,
         )
+        loaded_model_name = args.yolo_model
     reid = CattleReID(model_name=args.reid_model, device=reid_device)
     # DB PAR VIDÉO : utilise le chemin de DB correspondant à la source
     # initiale, pas un fichier générique. Chaque vidéo a sa propre DB.
@@ -401,8 +515,12 @@ def detection_loop(args):
     remaining = db.validate_dim(expected_dim)
     ok(f"[DB] {remaining} animaux charges (dim={expected_dim})")
 
-    # Sync initial settings to STATE (sinon les boutons UI ne savent pas l'état réel)
-    STATE["yolo_model_current"] = args.yolo_model
+    # Sync initial settings to STATE (sinon les boutons UI ne savent pas l'état réel).
+    # /!\ On utilise loaded_model_name (pas args.yolo_model) car l'auto-detection
+    # CoreML remplace le modele CLI sans changer args.yolo_model → sinon l'UI
+    # afficherait 'yolo26s-seg.safetensors' alors que le detector reel est CoreML,
+    # et un clic sur un cran imgsz enverrait un imgsz incompatible.
+    STATE["yolo_model_current"] = loaded_model_name
     STATE["imgsz_current"] = args.imgsz
     STATE["embed_every_current"] = args.embed_every
     STATE["threshold_current"] = args.threshold
@@ -462,6 +580,31 @@ def detection_loop(args):
         # imgsz (changement instantane, pas de reload)
         d = STATE.get("desired_imgsz")
         if d is not None and d != STATE.get("imgsz_current"):
+            # Garde-fou CoreML : le .mlpackage a une input shape figee. Si
+            # l'imgsz demande ne matche pas, on bascule vers la variante -640/-1280
+            # correspondante au lieu de crasher CoreML avec un shape mismatch.
+            cur_model = STATE.get("yolo_model_current", "") or ""
+            if cur_model.endswith(".mlpackage"):
+                cur_sz = _coreml_imgsz_from_name(cur_model)
+                if d != cur_sz:
+                    # Preserve l'archi (s ou m) — on ne rebascule pas un choix m
+                    # de l'utilisateur vers s juste parce que le cran imgsz change.
+                    import re as _re
+                    _arch_m = _re.match(r"^(yolo26[sm]-seg)-\d+\.mlpackage$", cur_model)
+                    arch = _arch_m.group(1) if _arch_m else "yolo26s-seg"
+                    available = sorted([
+                        _coreml_imgsz_from_name(m)
+                        for m in (f"{arch}-640.mlpackage", f"{arch}-1280.mlpackage")
+                        if _os.path.isdir(_os.path.join(_base, m))
+                    ])
+                    if available:
+                        target = next((s for s in available if s >= d), available[-1])
+                        target_model = f"{arch}-{target}.mlpackage"
+                        info(f"[Settings] imgsz={d} incompatible avec {cur_model} "
+                             f"(shape figee {cur_sz}) → bascule sur {target_model}")
+                        STATE["desired_yolo_model"] = target_model
+                        d = target  # aligne l'imgsz sur la variante ciblee
+                        STATE["desired_imgsz"] = target
             args.imgsz = d
             STATE["imgsz_current"] = d
             STATE["desired_imgsz"] = None
@@ -506,14 +649,22 @@ def detection_loop(args):
             STATE["events"] = STATE["events"][:30]
             try:
                 old = detector
-                # Choisit le bon detecteur selon le type de fichier
+                is_coreml = d.endswith(".mlpackage") or _os.path.isdir(d) and d.endswith(".mlpackage")
                 is_mlx_model = d.endswith(".safetensors") or d.startswith("yolo26")
-                if is_mlx_model:
+                if is_coreml:
+                    # Resoud un chemin absolu si l'UI a envoye juste le nom.
+                    d_abs = d if _os.path.isabs(d) else _os.path.join(_base, d)
+                    new_det = CattleDetector(
+                        model_name=d_abs, device="cpu", extra_classes=extra_classes,
+                    )
+                    _cml_sz = _coreml_imgsz_from_name(d_abs)
+                    args.imgsz = _cml_sz
+                    STATE["imgsz_current"] = _cml_sz
+                elif is_mlx_model:
                     new_det = CattleDetectorMLX(
                         model_name=d, device="mlx", extra_classes=extra_classes,
                     )
                 else:
-                    # Convertit le device MLX en device PyTorch compatible (mps/cpu)
                     pt_device = resolve_device("auto", for_pytorch=True)
                     new_det = CattleDetector(
                         model_name=d, device=pt_device, half=False,
@@ -694,7 +845,8 @@ def detection_loop(args):
                     crops_to_submit: dict[int, np.ndarray] = {}  # {track_id: crop}
                     det_idx_to_tid: dict[int, int] = {}
                     # Comportement vidéo courant par piste (rempli ci-dessous)
-                    video_beh_by_tid: dict[int, str] = {}
+                    # {tid: (label_EN, confidence)} — sortie brute du R(2+1)D
+                    video_beh_by_tid: dict[int, tuple[str, float]] = {}
 
                     for det_idx, (box, tid, conf) in enumerate(zip(boxes, track_ids, confs)):
                         x1, y1, x2, y2 = map(int, box)
@@ -705,11 +857,27 @@ def detection_loop(args):
                         det_idx_to_tid[det_idx] = int(tid)
                         track_age[int(tid)] = track_age.get(int(tid), 0) + 1
                         crop = frame[y1:y2, x1:x2]
-                        # Nourrit le buffer 16 frames du modèle vidéo et récupère
-                        # le comportement (grazing, walking...) si disponible.
-                        _vb = _video_behavior.update(int(tid), crop)
-                        if _vb:
-                            video_beh_by_tid[int(tid)] = _vb
+                        # Masque de segmentation pour ce det, en coordonnees crop.
+                        # Passe au classifieur d'action pour blacker le fond (barreaux,
+                        # foin, congeneres) et rester dans la distribution de training.
+                        _mask_crop = None
+                        if masks_data is not None and det_idx < len(masks_data):
+                            try:
+                                _mr = cv2.resize(
+                                    masks_data[det_idx],
+                                    (frame.shape[1], frame.shape[0]),
+                                    interpolation=cv2.INTER_NEAREST,
+                                )
+                                _mask_crop = (_mr > 0.5)[y1:y2, x1:x2]
+                            except Exception:
+                                _mask_crop = None
+                        # Nourrit le buffer du classifieur d'action et recupere
+                        # (label, confidence) si le buffer est plein. Peut etre None
+                        # (backend "none" ou modele indispo).
+                        if _video_behavior is not None:
+                            _vb = _video_behavior.update(int(tid), crop, _mask_crop)
+                            if _vb:
+                                video_beh_by_tid[int(tid)] = _vb
                         # "?" = en attente d'embedding (worker pas encore prêt).
                         # On le traite comme un nouveau track pour le re-soumettre.
                         existing = track_id_to_name.get(int(tid))
@@ -945,24 +1113,24 @@ def detection_loop(args):
                         # Nom propre (stable cross-session) via NameGenerator
                         display_name = name_gen.get(name) if name != "?" else "?"
 
-                        # Lookup du comportement courant pour ce tid
-                        behavior_label = ""
-                        for _b in STATE.get("behavior", []):
-                            if _b.get("track_id") == int(tid):
-                                behavior_label = _b.get("action", "")
-                                break
-
-                        # Comportement vidéo (R(2+1)D) pour ce tid, si dispo
-                        video_beh = video_beh_by_tid.get(int(tid), "")
-
-                        # Label affiche au-dessus de la tete : nom + comportement
-                        label = f"{display_name}  {behavior_label}  {video_beh}".strip()
-                        (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)
-                        ly1 = max(0, y1 - th - 10)
-                        ly2 = ly1 + th + 10
-                        cv2.rectangle(annotated, (x1, ly1), (x1 + tw + 8, ly2), color, -1)
-                        cv2.putText(annotated, label, (x1 + 4, ly1 + th + 2),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2)
+                        # Comportement du R(2+1)D : (label_EN, conf) ou None.
+                        # Sous _VIDEO_BEHAVIOR_MIN_CONF on n'affiche rien —
+                        # laisse le prenom seul plutot qu'une posture douteuse.
+                        _vbt = video_beh_by_tid.get(int(tid))
+                        if _vbt is not None and _vbt[1] >= _VIDEO_BEHAVIOR_MIN_CONF:
+                            behavior_label = _VIDEO_BEHAVIOR_FR.get(_vbt[0], _vbt[0])
+                        else:
+                            behavior_label = ""
+                        label = _strip_accents(f"{display_name}  {behavior_label}".strip())
+                        font_scale = 0.45
+                        font_thick = 1
+                        (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, font_thick)
+                        pad_x, pad_y = 4, 3
+                        ly1 = max(0, y1 - th - 2 * pad_y)
+                        ly2 = ly1 + th + 2 * pad_y
+                        cv2.rectangle(annotated, (x1, ly1), (x1 + tw + 2 * pad_x, ly2), color, -1)
+                        cv2.putText(annotated, label, (x1 + pad_x, ly2 - pad_y),
+                                    cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 0, 0), font_thick, cv2.LINE_AA)
                         active.append({
                             "name": display_name,
                             "key": name,  # la cle interne (Boeuf_001), pour debug
@@ -1000,66 +1168,40 @@ def detection_loop(args):
                             except Exception:
                                 pass
 
-                    # Comportement (sur la dernière frame traitée)
-                    # Head-down : voir posture.MaskHeadAnalyzer. Le signal est la
-                    # largeur de la plus longue plage de masque AU RAS DU SOL
-                    # (sabot etroit vs mufle large), invariant a l'orientation —
-                    # contrairement a l'aspect ratio qui echoue en vue laterale.
-                    # Le verdict est ensuite lisse temporellement par tid.
-                    head_down_by_tid = {}
-                    lying_by_tid = {}
-                    _active_tids = set()
-                    if masks_data is not None:
-                        _H, _W = frame.shape[:2]
-                        for _i, _tid in enumerate(track_ids):
-                            if _i >= len(masks_data):
-                                continue
-                            _tid_i = int(_tid)
-                            _active_tids.add(_tid_i)
-                            try:
-                                _mr = cv2.resize(masks_data[_i], (_W, _H),
-                                                 interpolation=cv2.INTER_NEAREST)
-                                _x1, _y1, _x2, _y2 = boxes[_i].astype(int)
-                                _roi = (_mr > 0.5)[max(0, _y1):min(_H, _y2),
-                                                   max(0, _x1):min(_W, _x2)]
-                                # Bas de silhouette non observable : boite
-                                # coupee par le bord de l'image, ou animal
-                                # largement masque par un congenere. Dans les
-                                # deux cas la bande basse est pleine sans que
-                                # l'animal soit couche -> on l'indique a
-                                # l'analyseur pour qu'il s'abstienne.
-                                _truncated = (
-                                    _y2 >= _H - BOTTOM_EDGE_MARGIN_PX
-                                    or (_i < len(occl_frac)
-                                        and occl_frac[_i] > OCCLUSION_SKIP_FRAC)
-                                )
-                                _state = _head_analyzer.analyze(
-                                    _roi, truncated_bottom=bool(_truncated),
-                                )
-                                head_down_by_tid[_tid_i] = _head_motion.update(
-                                    _tid_i, _state,
-                                )
-                                lying_by_tid[_tid_i] = _head_motion.is_lying(_tid_i)
-
-                                # Classifieur appris : prime sur les regles UNIQUEMENT
-                                # s'il est charge, active, et suffisamment sur (sinon
-                                # predict renvoie None et on garde le verdict ci-dessus).
-                                # Corrige les cas ou la geometrie du masque echoue
-                                # (bovin noir sur sol sombre, vue de face...).
-                                if (_posture_model.ok
-                                        and STATE.get("use_posture_model", True)):
-                                    _pred = _posture_model.predict(
-                                        track_last_emb.get(_tid_i)
-                                    )
-                                    if _pred is not None:
-                                        lying_by_tid[_tid_i], head_down_by_tid[_tid_i] = _pred
-                            except Exception:
-                                pass
-                        _head_motion.prune(_active_tids)
-                    STATE["_head_down"] = head_down_by_tid
-                    STATE["_lying"] = lying_by_tid
-                    STATE["behavior"] = analyze_behavior(boxes, track_ids, time.time(), frame.shape)
-                    emit_behavior_transitions(STATE["behavior"])
+                    # Comportement — 100 % modele R(2+1)D. Plus de posture.py,
+                    # plus de BehaviorAnalyzer. On expose STATE["behavior"] a
+                    # partir de video_beh_by_tid pour que /api/stats, analytics
+                    # et le dashboard restent alimentes sans changer leur contrat.
+                    _behavior_list: list[dict] = []
+                    _names_by_tid = STATE.get("_track_names", {})
+                    for _tid_i in map(int, track_ids):
+                        _vbt = video_beh_by_tid.get(_tid_i)
+                        if _vbt is None:
+                            continue
+                        _label_raw, _conf = _vbt
+                        # R(2+1)D emet des cles anglaises (grazing, walking...),
+                        # X-CLIP emet directement les cles FR de son dict de
+                        # prompts (pature, mange auge...). Le lookup renvoie la
+                        # cle telle quelle si elle n'est pas dans la map.
+                        _label_fr = _VIDEO_BEHAVIOR_FR.get(_label_raw, _label_raw)
+                        # Log une ligne UNIQUEMENT quand le label change pour ce
+                        # bovin (evite le spam). Inclut la confiance pour que tu
+                        # ajustes _VIDEO_BEHAVIOR_MIN_CONF si besoin.
+                        _log_key = f"{_label_fr}|{_conf:.2f}"
+                        _prev = _last_beh_logged.get(_tid_i)
+                        if _prev != _label_fr:  # compare que sur le label, pas la conf
+                            _last_beh_logged[_tid_i] = _label_fr
+                            _nm = _names_by_tid.get(_tid_i, f"tid={_tid_i}")
+                            info(f"[Behavior] {_nm} → {_label_fr} ({_conf:.2f})")
+                        if _conf < _VIDEO_BEHAVIOR_MIN_CONF:
+                            continue
+                        _behavior_list.append({
+                            "track_id": _tid_i,
+                            "name": _names_by_tid.get(_tid_i, "?"),
+                            "action": _label_fr,
+                            "confidence": round(float(_conf), 2),
+                        })
+                    STATE["behavior"] = _behavior_list
                     emit_isolation_alerts(boxes, track_ids, frame.shape)
 
                 # Encodage JPEG
@@ -1112,6 +1254,11 @@ def _recover_capture(cap, src, ret):
 
 def start_detection_thread(args) -> threading.Thread:
     """Démarre le thread de détection. À appeler une seule fois au boot."""
+    # Initialise le classifieur d'action selon le flag CLI. Fait ici (pas au
+    # niveau module) pour ne pas charger X-CLIP quand un autre backend est
+    # demande, et pour ne pas charger de modele sur simple `import processor`.
+    kind = getattr(args, "behavior_model", "r2plus1d")
+    set_behavior_backend(kind)
     t = threading.Thread(target=detection_loop, args=(args,), daemon=True)
     t.start()
     return t

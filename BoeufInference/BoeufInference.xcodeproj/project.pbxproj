@@ -1,0 +1,363 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0AA14173691F8EE1051E17E7 /* boeuf_yolo26s_640.mlpackage in Resources */ = {isa = PBXBuildFile; fileRef = 1D7477E503D74476B9DF027A /* boeuf_yolo26s_640.mlpackage */; };
+		1E754681B51945EA620B2B83 /* boeuf_cbvd5_seg.mlpackage in Resources */ = {isa = PBXBuildFile; fileRef = 207CAEAAEB4B16647DB00572 /* boeuf_cbvd5_seg.mlpackage */; };
+		6ED48E80DED7E014E541F5A8 /* Detector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F61438D0726A27E0EF8D583 /* Detector.swift */; };
+		EA3203E6392746CA83EC970C /* ByteTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F89ABF7A68F46EFBDE0B6F6 /* ByteTracker.swift */; };
+		0159BB31CA1444028104C7DA /* CowFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95FA40A454434AB3870491E9 /* CowFilter.swift */; };
+		7B26151B1E06A0645570BA22 /* ModelKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0507FCCEDA28D41435F23ED /* ModelKind.swift */; };
+		7FE00EEB0B1C7EB39798EE8E /* boeuf_cbvd5_lr001.mlpackage in Resources */ = {isa = PBXBuildFile; fileRef = F5B34821ED71BFC68FEC47D1 /* boeuf_cbvd5_lr001.mlpackage */; };
+		C2828C6ED82EDEB6B899F37D /* boeuf_yolo26s_832.mlpackage in Resources */ = {isa = PBXBuildFile; fileRef = 66B1E77C82F89497CE25F904 /* boeuf_yolo26s_832.mlpackage */; };
+		0A620D069D1D4722A9FABA4D /* yolo26n.mlpackage in Resources */ = {isa = PBXBuildFile; fileRef = 36FEF90AC1014BB2829001AC /* yolo26n.mlpackage */; };
+		CCD5A0C4153D502D4ECBF0AE /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86B947001E3262B3017C32FB /* VideoPlayerView.swift */; };
+		D6C3C39370EB451B71B43E49 /* BoeufInferenceApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E6C0E84F47EE3A175923F2 /* BoeufInferenceApp.swift */; };
+		E533FEEF0827F9ED0D8D9A86 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03F941E76F94B05578F9D9D5 /* ContentView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		03F941E76F94B05578F9D9D5 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		1D7477E503D74476B9DF027A /* boeuf_yolo26s_640.mlpackage */ = {isa = PBXFileReference; path = boeuf_yolo26s_640.mlpackage; sourceTree = "<group>"; };
+		207CAEAAEB4B16647DB00572 /* boeuf_cbvd5_seg.mlpackage */ = {isa = PBXFileReference; path = boeuf_cbvd5_seg.mlpackage; sourceTree = "<group>"; };
+		66B1E77C82F89497CE25F904 /* boeuf_yolo26s_832.mlpackage */ = {isa = PBXFileReference; path = boeuf_yolo26s_832.mlpackage; sourceTree = "<group>"; };
+		36FEF90AC1014BB2829001AC /* yolo26n.mlpackage */ = {isa = PBXFileReference; path = yolo26n.mlpackage; sourceTree = "<group>"; };
+		7B5AD3E6C71B71C8BF34F7A0 /* BoeufInference.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BoeufInference.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		86B947001E3262B3017C32FB /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
+		8F61438D0726A27E0EF8D583 /* Detector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Detector.swift; sourceTree = "<group>"; };
+		4F89ABF7A68F46EFBDE0B6F6 /* ByteTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ByteTracker.swift; sourceTree = "<group>"; };
+		95FA40A454434AB3870491E9 /* CowFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CowFilter.swift; sourceTree = "<group>"; };
+		D5E6C0E84F47EE3A175923F2 /* BoeufInferenceApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoeufInferenceApp.swift; sourceTree = "<group>"; };
+		F0507FCCEDA28D41435F23ED /* ModelKind.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelKind.swift; sourceTree = "<group>"; };
+		F5B34821ED71BFC68FEC47D1 /* boeuf_cbvd5_lr001.mlpackage */ = {isa = PBXFileReference; path = boeuf_cbvd5_lr001.mlpackage; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		28CBADA28BF001085AD027EB /* BoeufInference */ = {
+			isa = PBXGroup;
+			children = (
+				D5E6C0E84F47EE3A175923F2 /* BoeufInferenceApp.swift */,
+				03F941E76F94B05578F9D9D5 /* ContentView.swift */,
+				8F61438D0726A27E0EF8D583 /* Detector.swift */,
+				4F89ABF7A68F46EFBDE0B6F6 /* ByteTracker.swift */,
+				95FA40A454434AB3870491E9 /* CowFilter.swift */,
+				F0507FCCEDA28D41435F23ED /* ModelKind.swift */,
+				86B947001E3262B3017C32FB /* VideoPlayerView.swift */,
+				F209F2A3CDE0CD68B0B44D38 /* Models */,
+			);
+			path = BoeufInference;
+			sourceTree = "<group>";
+		};
+		3B466C7B72544F2FED5866D8 = {
+			isa = PBXGroup;
+			children = (
+				28CBADA28BF001085AD027EB /* BoeufInference */,
+				60A59AC2A218FBD0ED7F2143 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		60A59AC2A218FBD0ED7F2143 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				7B5AD3E6C71B71C8BF34F7A0 /* BoeufInference.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		F209F2A3CDE0CD68B0B44D38 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				F5B34821ED71BFC68FEC47D1 /* boeuf_cbvd5_lr001.mlpackage */,
+				207CAEAAEB4B16647DB00572 /* boeuf_cbvd5_seg.mlpackage */,
+				1D7477E503D74476B9DF027A /* boeuf_yolo26s_640.mlpackage */,
+				66B1E77C82F89497CE25F904 /* boeuf_yolo26s_832.mlpackage */,
+				36FEF90AC1014BB2829001AC /* yolo26n.mlpackage */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		BF0CCB785ED77843EF646F26 /* BoeufInference */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 568BD7876906B7EE922D1176 /* Build configuration list for PBXNativeTarget "BoeufInference" */;
+			buildPhases = (
+				1BA02D38E77CE20BE951C7F6 /* Sources */,
+				03055352C3E4B21AF41BAA2A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BoeufInference;
+			packageProductDependencies = (
+			);
+			productName = BoeufInference;
+			productReference = 7B5AD3E6C71B71C8BF34F7A0 /* BoeufInference.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		4455A6111B64066706EC3399 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					BF0CCB785ED77843EF646F26 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 1D38782E293141ACE334FCF8 /* Build configuration list for PBXProject "BoeufInference" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 3B466C7B72544F2FED5866D8;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 60A59AC2A218FBD0ED7F2143 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				BF0CCB785ED77843EF646F26 /* BoeufInference */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		03055352C3E4B21AF41BAA2A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7FE00EEB0B1C7EB39798EE8E /* boeuf_cbvd5_lr001.mlpackage in Resources */,
+				1E754681B51945EA620B2B83 /* boeuf_cbvd5_seg.mlpackage in Resources */,
+				0AA14173691F8EE1051E17E7 /* boeuf_yolo26s_640.mlpackage in Resources */,
+				C2828C6ED82EDEB6B899F37D /* boeuf_yolo26s_832.mlpackage in Resources */,
+				0A620D069D1D4722A9FABA4D /* yolo26n.mlpackage in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1BA02D38E77CE20BE951C7F6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D6C3C39370EB451B71B43E49 /* BoeufInferenceApp.swift in Sources */,
+				E533FEEF0827F9ED0D8D9A86 /* ContentView.swift in Sources */,
+				6ED48E80DED7E014E541F5A8 /* Detector.swift in Sources */,
+				EA3203E6392746CA83EC970C /* ByteTracker.swift in Sources */,
+				0159BB31CA1444028104C7DA /* CowFilter.swift in Sources */,
+				7B26151B1E06A0645570BA22 /* ModelKind.swift in Sources */,
+				CCD5A0C4153D502D4ECBF0AE /* VideoPlayerView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		03C172079FCBB3288685165B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = BoeufInference/BoeufInference.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.boeuftracker.BoeufInference;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		D36199DB0B7F434CC002FBF8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.video";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMainStoryboardFile = "";
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				INFOPLIST_KEY_UILaunchStoryboardName = "";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		E8E4125CC5B6CD713B1F7227 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.video";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMainStoryboardFile = "";
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				INFOPLIST_KEY_UILaunchStoryboardName = "";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		EAA1F2036B12A45134DA46F4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = BoeufInference/BoeufInference.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.boeuftracker.BoeufInference;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1D38782E293141ACE334FCF8 /* Build configuration list for PBXProject "BoeufInference" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D36199DB0B7F434CC002FBF8 /* Debug */,
+				E8E4125CC5B6CD713B1F7227 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		568BD7876906B7EE922D1176 /* Build configuration list for PBXNativeTarget "BoeufInference" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EAA1F2036B12A45134DA46F4 /* Debug */,
+				03C172079FCBB3288685165B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 4455A6111B64066706EC3399 /* Project object */;
+}

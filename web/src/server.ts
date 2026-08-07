@@ -20,16 +20,42 @@ const PORT = Number(process.env.PORT ?? 8000);
 const app = new Hono();
 
 // ─── Proxy vers le worker Python ────────────────────────────────────────
-// Tout /api/* et /video_feed est forwardé tel quel (JSON, binaire, etc.).
-async function proxyToPython(path: string, init?: RequestInit): Promise<Response> {
+// Tout /api/* et /video_feed est forwardé tel quel (JSON, binaire, MJPEG stream…).
+// IMPORTANT : on STREAME la réponse (resp.body) — surtout pas arrayBuffer(),
+// sinon un flux MJPEG infini (video_feed) buffere pour toujours et l'image
+// ne s'affiche jamais côté navigateur.
+const HOP_BY_HOP_REQ = new Set([
+  "host", "connection", "content-length", "transfer-encoding",
+  "accept-encoding", "keep-alive", "proxy-connection", "upgrade",
+]);
+const HOP_BY_HOP_RESP = new Set([
+  "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
+  "te", "trailers", "transfer-encoding", "upgrade",
+]);
+
+function filterHeaders(src: Headers, deny: Set<string>): Headers {
+  const out = new Headers();
+  src.forEach((v, k) => { if (!deny.has(k.toLowerCase())) out.set(k, v); });
+  return out;
+}
+
+async function proxyToPython(path: string, c: any, opts: { forwardBody: boolean }): Promise<Response> {
   const url = `${PYTHON_WORKER}${path}`;
+  const method = c.req.method;
+  const hasBody = opts.forwardBody && method !== "GET" && method !== "HEAD";
+  const init: RequestInit & { duplex?: "half" } = {
+    method,
+    headers: filterHeaders(c.req.raw.headers, HOP_BY_HOP_REQ),
+    body: hasBody ? c.req.raw.body : undefined,
+    // Requis par undici/Bun quand body est un ReadableStream (upload multipart)
+    ...(hasBody ? { duplex: "half" as const } : {}),
+  };
   try {
     const resp = await fetch(url, init);
-    // On retransmet la réponse telle quelle (headers + body binaire/JSON)
-    const headers = new Headers();
-    resp.headers.forEach((v, k) => headers.set(k, v));
-    const body = await resp.arrayBuffer();
-    return new Response(body, { status: resp.status, headers });
+    return new Response(resp.body, {
+      status: resp.status,
+      headers: filterHeaders(resp.headers, HOP_BY_HOP_RESP),
+    });
   } catch (e) {
     return Response.json(
       { ok: false, error: `Worker Python injoignable (${PYTHON_WORKER}). Lancez: python app.py --mlx` },
@@ -38,21 +64,18 @@ async function proxyToPython(path: string, init?: RequestInit): Promise<Response
   }
 }
 
-// Proxy GET /api/* et /video_feed
+// Proxy /api/* (JSON + upload multipart)
 app.all("/api/*", (c) => {
   const qs = c.req.raw.url.split("?")[1] ?? "";
   const path = c.req.path + (qs ? `?${qs}` : "");
-  return proxyToPython(path, {
-    method: c.req.method,
-    headers: c.req.raw.headers,
-    body: c.req.method !== "GET" && c.req.method !== "HEAD" ? c.req.raw.body : undefined,
-  });
+  return proxyToPython(path, c, { forwardBody: true });
 });
 
+// Proxy /video_feed (flux MJPEG — pas de body côté requête)
 app.all("/video_feed", (c) => {
   const qs = c.req.raw.url.split("?")[1] ?? "";
   const path = "/video_feed" + (qs ? `?${qs}` : "");
-  return proxyToPython(path, { headers: c.req.raw.headers });
+  return proxyToPython(path, c, { forwardBody: false });
 });
 
 // ─── Fichiers statiques (UI) ────────────────────────────────────────────

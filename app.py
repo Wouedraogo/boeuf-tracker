@@ -27,27 +27,23 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 def _pick_default_source() -> str:
+    """Source de reference : samples/IMG_3546.mov si presente, sinon vide.
+
+    IMG_3546.mov est la sequence de reference (troupeau bien cadre, comportements
+    varies) sur laquelle on cale les reglages par defaut. Sans ce fichier
+    (ex. checkout fresh), l'utilisateur choisit via l'UI.
     """
-    Choisit la source par défaut:
-    1. Première vidéo .mp4/.mov/.avi à la racine du projet
-    2. Sinon '0' (webcam)
-    Permet de lancer `python app.py` sans paramètre quand des vidéos
-    de test sont présentes à la racine.
-    """
-    project_root = os.path.dirname(os.path.abspath(__file__))
-    video_exts = (".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4v")
-    search_dirs = [os.path.join(project_root, "samples"), project_root]
-    for d in search_dirs:
-        if not os.path.isdir(d):
-            continue
-        try:
-            for entry in sorted(os.listdir(d)):
-                full = os.path.join(d, entry)
-                if os.path.isfile(full) and entry.lower().endswith(video_exts):
-                    return os.path.abspath(full)
-        except OSError:
-            continue
-    return "0"
+    import os as _os
+    _samples = _os.path.join(
+        _os.path.dirname(_os.path.abspath(__file__)), "samples",
+    )
+    # Priorite au 1280 re-encode (H.264 24 fps yuv420p) qui matche exactement
+    # yolo26s-seg-1280.mlpackage. Fallback au .mov brut si non re-encode.
+    for _name in ("IMG_3546_1280.mp4", "IMG_3546.mov"):
+        _p = _os.path.join(_samples, _name)
+        if _os.path.isfile(_p):
+            return _p
+    return ""
 
 
 def parse_args():
@@ -126,6 +122,12 @@ def parse_args():
     p.add_argument("--embed-every", type=int, default=10,
                    help="Recalculer l'embedding DINOv2 tous les N frames (perf).")
     p.add_argument("--no-save", action="store_true")
+    p.add_argument("--behavior-model", type=str, default="r2plus1d",
+                   choices=["r2plus1d", "xclip", "none"],
+                   help="Classifieur d'action. 'r2plus1d' (defaut) = behavior_video.pt, "
+                        "rapide, taxonomie figee. 'xclip' = zero-shot (microsoft/xclip-"
+                        "base-patch32, ~1 GB), permet d'ajouter des labels via des "
+                        "phrases sans re-training. 'none' = pas d'action affichee.")
     p.add_argument("--ui-dir", type=str, default="web/public",
                    help="Repertoire de l'UI statique (defaut: web/public). "
                         "Permet au worker de servir l'interface sans Bun.")
@@ -752,10 +754,12 @@ def main():
     # Repertoire de l'UI : permet au worker de servir l'interface sans Bun.
     # On resout en chemin absolu pour que ca marche quel que soit le cwd.
     STATE["ui_dir"] = os.path.abspath(args.ui_dir)
-    src_display = (
-        f"webcam ({args.source})" if str(args.source).isdigit()
-        else os.path.basename(args.source)
-    )
+    if not args.source:
+        src_display = "(aucune — sélectionner via l'UI)"
+    elif str(args.source).isdigit():
+        src_display = f"webcam ({args.source})"
+    else:
+        src_display = os.path.basename(args.source)
     log_banner(
         "BOEUF TRACKER — Interface web",
         [

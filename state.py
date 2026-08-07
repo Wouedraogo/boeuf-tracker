@@ -74,19 +74,26 @@ STATE = {
     "embed_every_current": 10,
     "threshold_current": 0.70,
     "conf_current": 0.25,
-    # Drapeaux de posture par piste, alimentes par posture.py
-    "_head_down": {},
-    "_lying": {},
     "ui_dir": "web/public",       # repertoire de l'UI statique (sert sans Bun)
     "models_available": [
-        # YOLO26 MLX (Metal GPU Apple Silicon - recommandee)
+        # CoreML/ANE (Apple Silicon, le plus rapide — imgsz FIGE a l'export).
+        # On expose deux variantes par variante d'archi (small et medium), l'UI
+        # switche automatiquement selon le cran de resolution choisi
+        # (640 -> -640.mlpackage, 1280 -> -1280.mlpackage).
+        # Medium (m) = ~15 pts mAP au-dessus du small sur COCO, meilleure
+        # segmentation en scene barn/troupeau serre. ~2x plus lent que small.
+        "yolo26m-seg-640.mlpackage",
+        "yolo26m-seg-1280.mlpackage",
+        "yolo26s-seg-640.mlpackage",
+        "yolo26s-seg-1280.mlpackage",
+        # YOLO26 MLX (Metal GPU Apple Silicon)
         "yolo26s-seg.safetensors",
+        # YOLO26 PyTorch
+        "yolo26m-seg.pt",
+        "yolo26s-seg.pt",
         # YOLO11 standard
-        "yolo11n.pt", "yolo11n-seg.pt",
-        "yolo11s.pt", "yolo11s-seg.pt",
-        "yolo11m.pt", "yolo11m-seg.pt",
-        "yolo11l.pt", "yolo11l-seg.pt",
-        "yolo11x.pt", "yolo11x-seg.pt",
+        "yolo11n-seg.pt", "yolo11s-seg.pt",
+        "yolo11m-seg.pt", "yolo11l-seg.pt", "yolo11x-seg.pt",
     ],
 }
 
@@ -97,10 +104,5 @@ def reset_for_new_source():
         STATE["active_animals"] = []
         STATE["behavior"] = []
     STATE["track_history"].clear()
-    # Les drapeaux de posture sont indexes par track_id : les conserver ferait
-    # heriter la posture d'un bovin de la source precedente au premier bovin
-    # de la nouvelle (les identifiants de piste repartent de 1).
-    STATE.get("_head_down", {}).clear()
-    STATE.get("_lying", {}).clear()
     STATE["events"].insert(0, "TRACKER reset")
     STATE["events"] = STATE["events"][:30]
