@@ -19,8 +19,11 @@ final class ByteTracker {
     let lowScoreThresh:  Float = 0.10
     /// Min IoU to accept a match in either stage.
     let matchIoU:  Float = 0.30
-    /// Frames without a matching detection before a track is dropped.
+    /// Frames without a matching detection before a track is dropped from memory.
     let maxAge:    Int = 30
+    /// Frames without a match after which we stop DRAWING the track (it stays in
+    /// memory for potential re-matching, but the box no longer appears on screen).
+    let maxDrawAge: Int = 3
     /// Consecutive hits required before a track is reported to the UI.
     let minHits:   Int = 3
     /// Rolling window (in frames) over which we vote the reported class.
@@ -63,8 +66,11 @@ final class ByteTracker {
         tracks.removeAll { $0.timeSinceUpdate > maxAge }
 
         // 8. Emit confirmed tracks with smoothed geometry and majority class.
+        //    Skip tracks that missed too many frames — they stay in memory for
+        //    re-matching (up to maxAge) but are not drawn to avoid ghost boxes
+        //    bouncing after an animal leaves the frame.
         return tracks.compactMap { t in
-            guard t.hits >= minHits else { return nil }
+            guard t.hits >= minHits, t.timeSinceUpdate <= maxDrawAge else { return nil }
             let cls = t.majorityClass()
             let name = t.className(for: cls)
             return Detection(
@@ -151,10 +157,16 @@ final class Track {
     }
 
     /// Move the state one frame forward with the current velocity.
+    /// Velocity decays each frame we're not seeing a matching detection, so a
+    /// lost track slows down instead of shooting off toward infinity.
     func predict() {
+        if timeSinceUpdate > 0 {
+            let decay: CGFloat = 0.7   // 30% velocity killed per missed frame
+            vcx *= decay
+            vcy *= decay
+        }
         cx += vcx
         cy += vcy
-        // Clamp inside the frame so a lost track doesn't drift off screen.
         cx = max(0, min(1, cx))
         cy = max(0, min(1, cy))
     }

@@ -55,7 +55,6 @@
         </div>
         <div class="control-group control-right">
             <span id="upload-status" class="status-text"></span>
-            <button id="btn-skeleton" class="btn btn-outline">Squelette</button>
             <button id="btn-reset-db" class="btn btn-warning-outline">Reset DB</button>
         </div>
     </div>
@@ -69,95 +68,59 @@
             </div>
             <div class="video-legend">
                 <span class="dot dot-green"></span>
-                <span>bovin identifié</span>
+                <span>Bovin identifié & suivi</span>
             </div>
         </section>
 
         <!-- Sidebar -->
         <aside class="sidebar">
-            <!-- Paramètres live -->
+            <!-- 1. Bovins Détectés & Comportements -->
             <div class="card">
-                <h3 class="card-title">Paramètres (live)</h3>
-                <div class="card-body">
-                    <div class="setting-row">
-                        <label class="setting-label">Modèle YOLO</label>
-                        <select id="setting-model" class="select select-full"></select>
-                        <p id="hint-model" class="setting-hint">~ ? FPS</p>
-                    </div>
-                    <div class="setting-row">
-                        <label class="setting-label">Résolution (imgsz)</label>
-                        <div class="btn-group">
-                            <button class="btn btn-sm btn-outline" data-imgsz="320">320</button>
-                            <button class="btn btn-sm btn-outline" data-imgsz="416">416</button>
-                            <button class="btn btn-sm btn-outline" data-imgsz="640">640</button>
-                            <button class="btn btn-sm btn-outline" data-imgsz="960">960</button>
-                            <button class="btn btn-sm btn-outline" data-imgsz="1280">1280</button>
-                        </div>
-                    </div>
-                    <div class="setting-row">
-                        <label class="setting-label">Re-embed tous les N frames</label>
-                        <input id="setting-embed" type="range" min="1" max="60" value="10" class="range">
-                        <div class="range-labels">
-                            <span>1 (précis)</span>
-                            <span id="setting-embed-val">10</span>
-                            <span>60 (rapide)</span>
-                        </div>
-                    </div>
-                    <div class="setting-row">
-                        <label class="setting-label">Seuil Re-ID</label>
-                        <input id="setting-threshold" type="range" min="0.30" max="0.95" step="0.01" value="0.65" class="range">
-                        <div class="range-labels">
-                            <span>0.30</span>
-                            <span id="setting-threshold-val">0.65</span>
-                            <span>0.95</span>
-                        </div>
-                    </div>
-                    <div class="setting-row">
-                        <label class="setting-label">Confiance YOLO</label>
-                        <input id="setting-conf" type="range" min="0.10" max="0.90" step="0.05" value="0.40" class="range">
-                        <div class="range-labels">
-                            <span>0.10</span>
-                            <span id="setting-conf-val">0.40</span>
-                            <span>0.90</span>
-                        </div>
-                    </div>
-                    <div class="setting-row setting-actions">
-                        <span id="settings-status" class="status-text status-success"></span>
-                        <button id="btn-rematch" class="btn btn-sm btn-primary" title="Force la re-identification">Re-match</button>
-                    </div>
+                <div class="card-header-flex">
+                    <h3 class="card-title">Bovins en direct</h3>
+                    <span class="badge badge-active"><span id="active-count">0</span> visible(s)</span>
                 </div>
-            </div>
-
-            <!-- Animaux -->
-            <div class="card">
-                <h3 class="card-title">Animaux détectés</h3>
                 <div class="card-body">
-                    <p class="card-subtitle"><span id="active-count" class="text-success text-bold">0</span> actuellement visibles</p>
+                    <p class="card-subtitle">Identités Re-ID & Comportements</p>
                     <ul id="animal-list" class="list">
-                        <li class="list-empty">Aucun animal visible</li>
+                        <li class="list-empty">Aucun bovin visible</li>
                     </ul>
                 </div>
             </div>
 
-            <!-- Journal -->
+            <!-- 2. Journal d'Événements -->
             <div class="card">
-                <h3 class="card-title">Journal</h3>
+                <h3 class="card-title">Journal d'Activité</h3>
                 <div class="card-body">
-                    <p class="card-subtitle">Derniers événements</p>
+                    <p class="card-subtitle">Derniers événements du troupeau</p>
                     <ul id="event-list" class="list list-mono">
                         <li class="list-empty">Aucun événement</li>
                     </ul>
                 </div>
             </div>
 
-            <!-- Activités -->
+            <!-- 3. Paramètres Essentiels -->
             <div class="card">
-                <h3 class="card-title">Activités</h3>
+                <h3 class="card-title">Paramètres Détection</h3>
                 <div class="card-body">
-                    <p class="card-subtitle">Comportement détecté</p>
-                    <ul id="behavior-list" class="list">
-                        <li class="list-empty">Aucune activité</li>
-                    </ul>
+                    <div class="setting-row">
+                        <label class="setting-label">Modèle YOLO</label>
+                        <select id="setting-model" class="select select-full"></select>
+                        <p id="hint-model" class="setting-hint"></p>
+                    </div>
+                    <div class="setting-row">
+                        <label class="setting-label">Sensibilité / Confiance</label>
+                        <input id="setting-conf" type="range" min="0.10" max="0.90" step="0.05" value="0.25" class="range">
+                        <div class="range-labels">
+                            <span>0.10 (max rappel)</span>
+                            <span id="setting-conf-val">0.25</span>
+                            <span>0.90 (strict)</span>
+                        </div>
+                    </div>
+                    <div class="setting-row setting-actions">
+                        <span id="settings-status" class="status-text status-success"></span>
+                        <button id="btn-rematch" class="btn btn-sm btn-primary" title="Re-calculer l'identification">Re-identifier</button>
+                    </div>
                 </div>
             </div>
         </aside>

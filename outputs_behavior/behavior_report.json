@@ -1,0 +1,1464 @@
+{
+  "modele_detection": "yolo26s-seg.pt",
+  "modele_action_frame": "boeuf_cbvd5_lr001/weights/best.pt",
+  "modele_action_video": "behavior_video.pt",
+  "device": "mps",
+  "imgsz": 832,
+  "source": "samples2 (clips < 4 s exclus)",
+  "nb_videos": 8,
+  "duree_traitement_s": 1425.0,
+  "actions_globales_frames": {
+    "debout": 9645,
+    "couche": 378,
+    "marche": 95,
+    "boit": 61,
+    "mange": 20
+  },
+  "montage": "montage_behavior.mp4",
+  "videos": [
+    {
+      "video": "VIDEO-2026-08-24-13-55-35 3.mp4",
+      "output": "VIDEO-2026-08-24-13-55-35_3_behavior.mp4",
+      "frames_source": 1128,
+      "frames_inferees": 564,
+      "stride": 2,
+      "fps_source": 59.97,
+      "fps_sortie": 29.98,
+      "processing_fps": 3.7,
+      "seconds": 152.4,
+      "tracks": 14,
+      "per_track": {
+        "1": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 287
+          },
+          "secondes_par_action": {
+            "debout": 9.6
+          }
+        },
+        "2": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 149
+          },
+          "secondes_par_action": {
+            "debout": 5.0
+          }
+        },
+        "3": {
+          "dominant": "couche",
+          "frames_par_action": {
+            "couche": 32,
+            "debout": 16
+          },
+          "secondes_par_action": {
+            "couche": 1.1,
+            "debout": 0.5
+          }
+        },
+        "4": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 468,
+            "boit": 1
+          },
+          "secondes_par_action": {
+            "debout": 15.6,
+            "boit": 0.0
+          }
+        },
+        "5": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 27
+          },
+          "secondes_par_action": {
+            "debout": 0.9
+          }
+        },
+        "6": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 64,
+            "couche": 24
+          },
+          "secondes_par_action": {
+            "debout": 2.1,
+            "couche": 0.8
+          }
+        },
+        "13": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 1
+          },
+          "secondes_par_action": {
+            "debout": 0.0
+          }
+        },
+        "29": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 6
+          },
+          "secondes_par_action": {
+            "debout": 0.2
+          }
+        },
+        "33": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 30
+          },
+          "secondes_par_action": {
+            "debout": 1.0
+          }
+        },
+        "82": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 34
+          },
+          "secondes_par_action": {
+            "debout": 1.1
+          }
+        },
+        "88": {
+          "dominant": "couche",
+          "frames_par_action": {
+            "couche": 23,
+            "debout": 15
+          },
+          "secondes_par_action": {
+            "couche": 0.8,
+            "debout": 0.5
+          }
+        },
+        "104": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 142
+          },
+          "secondes_par_action": {
+            "debout": 4.7
+          }
+        },
+        "129": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 25,
+            "marche": 8
+          },
+          "secondes_par_action": {
+            "debout": 0.8,
+            "marche": 0.3
+          }
+        },
+        "132": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 6
+          },
+          "secondes_par_action": {
+            "debout": 0.2
+          }
+        }
+      }
+    },
+    {
+      "video": "VIDEO-2026-08-24-13-55-35 4.mp4",
+      "output": "VIDEO-2026-08-24-13-55-35_4_behavior.mp4",
+      "frames_source": 314,
+      "frames_inferees": 157,
+      "stride": 2,
+      "fps_source": 59.96,
+      "fps_sortie": 29.98,
+      "processing_fps": 2.65,
+      "seconds": 59.2,
+      "tracks": 10,
+      "per_track": {
+        "1": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 69
+          },
+          "secondes_par_action": {
+            "debout": 2.3
+          }
+        },
+        "2": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 114
+          },
+          "secondes_par_action": {
+            "debout": 3.8
+          }
+        },
+        "3": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 15
+          },
+          "secondes_par_action": {
+            "debout": 0.5
+          }
+        },
+        "5": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 69,
+            "boit": 2
+          },
+          "secondes_par_action": {
+            "debout": 2.3,
+            "boit": 0.1
+          }
+        },
+        "6": {
+          "dominant": "couche",
+          "frames_par_action": {
+            "couche": 8,
+            "debout": 3
+          },
+          "secondes_par_action": {
+            "couche": 0.3,
+            "debout": 0.1
+          }
+        },
+        "7": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 45
+          },
+          "secondes_par_action": {
+            "debout": 1.5
+          }
+        },
+        "19": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 22
+          },
+          "secondes_par_action": {
+            "debout": 0.7
+          }
+        },
+        "23": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 31,
+            "mange": 2
+          },
+          "secondes_par_action": {
+            "debout": 1.0,
+            "mange": 0.1
+          }
+        },
+        "34": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 2
+          },
+          "secondes_par_action": {
+            "debout": 0.1
+          }
+        },
+        "38": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 6
+          },
+          "secondes_par_action": {
+            "debout": 0.2
+          }
+        }
+      }
+    },
+    {
+      "video": "VIDEO-2026-08-24-13-55-35 6.mp4",
+      "output": "VIDEO-2026-08-24-13-55-35_6_behavior.mp4",
+      "frames_source": 733,
+      "frames_inferees": 367,
+      "stride": 2,
+      "fps_source": 59.97,
+      "fps_sortie": 29.98,
+      "processing_fps": 1.69,
+      "seconds": 217.7,
+      "tracks": 10,
+      "per_track": {
+        "2": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 265
+          },
+          "secondes_par_action": {
+            "debout": 8.8
+          }
+        },
+        "3": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 303
+          },
+          "secondes_par_action": {
+            "debout": 10.1
+          }
+        },
+        "4": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 12
+          },
+          "secondes_par_action": {
+            "debout": 0.4
+          }
+        },
+        "5": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 43,
+            "couche": 24
+          },
+          "secondes_par_action": {
+            "debout": 1.4,
+            "couche": 0.8
+          }
+        },
+        "6": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 102
+          },
+          "secondes_par_action": {
+            "debout": 3.4
+          }
+        },
+        "9": {
+          "dominant": "couche",
+          "frames_par_action": {
+            "couche": 8
+          },
+          "secondes_par_action": {
+            "couche": 0.3
+          }
+        },
+        "37": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 186
+          },
+          "secondes_par_action": {
+            "debout": 6.2
+          }
+        },
+        "53": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 4,
+            "couche": 2
+          },
+          "secondes_par_action": {
+            "debout": 0.1,
+            "couche": 0.1
+          }
+        },
+        "127": {
+          "dominant": "couche",
+          "frames_par_action": {
+            "couche": 9
+          },
+          "secondes_par_action": {
+            "couche": 0.3
+          }
+        },
+        "130": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 4
+          },
+          "secondes_par_action": {
+            "debout": 0.1
+          }
+        }
+      }
+    },
+    {
+      "video": "VIDEO-2026-08-24-13-55-36 2.mp4",
+      "output": "VIDEO-2026-08-24-13-55-36_2_behavior.mp4",
+      "frames_source": 674,
+      "frames_inferees": 337,
+      "stride": 2,
+      "fps_source": 59.96,
+      "fps_sortie": 29.98,
+      "processing_fps": 3.36,
+      "seconds": 100.2,
+      "tracks": 18,
+      "per_track": {
+        "1": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 73,
+            "couche": 8
+          },
+          "secondes_par_action": {
+            "debout": 2.4,
+            "couche": 0.3
+          }
+        },
+        "2": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 337
+          },
+          "secondes_par_action": {
+            "debout": 11.2
+          }
+        },
+        "3": {
+          "dominant": "couche",
+          "frames_par_action": {
+            "couche": 15,
+            "debout": 6
+          },
+          "secondes_par_action": {
+            "couche": 0.5,
+            "debout": 0.2
+          }
+        },
+        "4": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 10
+          },
+          "secondes_par_action": {
+            "debout": 0.3
+          }
+        },
+        "5": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 323
+          },
+          "secondes_par_action": {
+            "debout": 10.8
+          }
+        },
+        "6": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 12
+          },
+          "secondes_par_action": {
+            "debout": 0.4
+          }
+        },
+        "7": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 38
+          },
+          "secondes_par_action": {
+            "debout": 1.3
+          }
+        },
+        "8": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 21
+          },
+          "secondes_par_action": {
+            "debout": 0.7
+          }
+        },
+        "9": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 214
+          },
+          "secondes_par_action": {
+            "debout": 7.1
+          }
+        },
+        "20": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 83,
+            "couche": 41
+          },
+          "secondes_par_action": {
+            "debout": 2.8,
+            "couche": 1.4
+          }
+        },
+        "47": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 3
+          },
+          "secondes_par_action": {
+            "debout": 0.1
+          }
+        },
+        "53": {
+          "dominant": "couche",
+          "frames_par_action": {
+            "couche": 5
+          },
+          "secondes_par_action": {
+            "couche": 0.2
+          }
+        },
+        "60": {
+          "dominant": "couche",
+          "frames_par_action": {
+            "couche": 2,
+            "debout": 1
+          },
+          "secondes_par_action": {
+            "couche": 0.1,
+            "debout": 0.0
+          }
+        },
+        "71": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 19
+          },
+          "secondes_par_action": {
+            "debout": 0.6
+          }
+        },
+        "90": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 106
+          },
+          "secondes_par_action": {
+            "debout": 3.5
+          }
+        },
+        "111": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 2
+          },
+          "secondes_par_action": {
+            "debout": 0.1
+          }
+        },
+        "123": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 10
+          },
+          "secondes_par_action": {
+            "debout": 0.3
+          }
+        },
+        "165": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 1
+          },
+          "secondes_par_action": {
+            "debout": 0.0
+          }
+        }
+      }
+    },
+    {
+      "video": "VIDEO-2026-08-24-13-55-36 3.mp4",
+      "output": "VIDEO-2026-08-24-13-55-36_3_behavior.mp4",
+      "frames_source": 282,
+      "frames_inferees": 141,
+      "stride": 2,
+      "fps_source": 59.96,
+      "fps_sortie": 29.98,
+      "processing_fps": 4.66,
+      "seconds": 30.2,
+      "tracks": 12,
+      "per_track": {
+        "2": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 37
+          },
+          "secondes_par_action": {
+            "debout": 1.2
+          }
+        },
+        "3": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 8,
+            "couche": 5
+          },
+          "secondes_par_action": {
+            "debout": 0.3,
+            "couche": 0.2
+          }
+        },
+        "4": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 4
+          },
+          "secondes_par_action": {
+            "debout": 0.1
+          }
+        },
+        "6": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 36
+          },
+          "secondes_par_action": {
+            "debout": 1.2
+          }
+        },
+        "10": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 2
+          },
+          "secondes_par_action": {
+            "debout": 0.1
+          }
+        },
+        "13": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 3
+          },
+          "secondes_par_action": {
+            "debout": 0.1
+          }
+        },
+        "14": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 1
+          },
+          "secondes_par_action": {
+            "debout": 0.0
+          }
+        },
+        "20": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 2
+          },
+          "secondes_par_action": {
+            "debout": 0.1
+          }
+        },
+        "30": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 8
+          },
+          "secondes_par_action": {
+            "debout": 0.3
+          }
+        },
+        "41": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 1
+          },
+          "secondes_par_action": {
+            "debout": 0.0
+          }
+        },
+        "63": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 1
+          },
+          "secondes_par_action": {
+            "debout": 0.0
+          }
+        },
+        "72": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 2
+          },
+          "secondes_par_action": {
+            "debout": 0.1
+          }
+        }
+      }
+    },
+    {
+      "video": "VIDEO-2026-08-24-13-55-36 4.mp4",
+      "output": "VIDEO-2026-08-24-13-55-36_4_behavior.mp4",
+      "frames_source": 859,
+      "frames_inferees": 430,
+      "stride": 2,
+      "fps_source": 59.97,
+      "fps_sortie": 29.98,
+      "processing_fps": 1.75,
+      "seconds": 246.1,
+      "tracks": 17,
+      "per_track": {
+        "1": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 8,
+            "mange": 2
+          },
+          "secondes_par_action": {
+            "debout": 0.3,
+            "mange": 0.1
+          }
+        },
+        "2": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 323
+          },
+          "secondes_par_action": {
+            "debout": 10.8
+          }
+        },
+        "3": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 333
+          },
+          "secondes_par_action": {
+            "debout": 11.1
+          }
+        },
+        "4": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 22
+          },
+          "secondes_par_action": {
+            "debout": 0.7
+          }
+        },
+        "5": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 77
+          },
+          "secondes_par_action": {
+            "debout": 2.6
+          }
+        },
+        "6": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 17,
+            "couche": 8
+          },
+          "secondes_par_action": {
+            "debout": 0.6,
+            "couche": 0.3
+          }
+        },
+        "7": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 85,
+            "couche": 8
+          },
+          "secondes_par_action": {
+            "debout": 2.8,
+            "couche": 0.3
+          }
+        },
+        "33": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 4
+          },
+          "secondes_par_action": {
+            "debout": 0.1
+          }
+        },
+        "37": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 1
+          },
+          "secondes_par_action": {
+            "debout": 0.0
+          }
+        },
+        "52": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 24
+          },
+          "secondes_par_action": {
+            "debout": 0.8
+          }
+        },
+        "63": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 4
+          },
+          "secondes_par_action": {
+            "debout": 0.1
+          }
+        },
+        "69": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 71,
+            "couche": 8
+          },
+          "secondes_par_action": {
+            "debout": 2.4,
+            "couche": 0.3
+          }
+        },
+        "108": {
+          "dominant": "couche",
+          "frames_par_action": {
+            "couche": 16
+          },
+          "secondes_par_action": {
+            "couche": 0.5
+          }
+        },
+        "117": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 2
+          },
+          "secondes_par_action": {
+            "debout": 0.1
+          }
+        },
+        "124": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 1
+          },
+          "secondes_par_action": {
+            "debout": 0.0
+          }
+        },
+        "129": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 15
+          },
+          "secondes_par_action": {
+            "debout": 0.5
+          }
+        },
+        "176": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 1
+          },
+          "secondes_par_action": {
+            "debout": 0.0
+          }
+        }
+      }
+    },
+    {
+      "video": "VIDEO-2026-08-24-13-55-36 5.mp4",
+      "output": "VIDEO-2026-08-24-13-55-36_5_behavior.mp4",
+      "frames_source": 2849,
+      "frames_inferees": 1425,
+      "stride": 2,
+      "fps_source": 59.97,
+      "fps_sortie": 29.98,
+      "processing_fps": 2.84,
+      "seconds": 502.3,
+      "tracks": 42,
+      "per_track": {
+        "1": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 779,
+            "couche": 9
+          },
+          "secondes_par_action": {
+            "debout": 26.0,
+            "couche": 0.3
+          }
+        },
+        "2": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 33
+          },
+          "secondes_par_action": {
+            "debout": 1.1
+          }
+        },
+        "3": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 527
+          },
+          "secondes_par_action": {
+            "debout": 17.6
+          }
+        },
+        "4": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 99
+          },
+          "secondes_par_action": {
+            "debout": 3.3
+          }
+        },
+        "5": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 479,
+            "marche": 80,
+            "couche": 5
+          },
+          "secondes_par_action": {
+            "debout": 16.0,
+            "marche": 2.7,
+            "couche": 0.2
+          }
+        },
+        "6": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 296,
+            "couche": 3
+          },
+          "secondes_par_action": {
+            "debout": 9.9,
+            "couche": 0.1
+          }
+        },
+        "25": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 120
+          },
+          "secondes_par_action": {
+            "debout": 4.0
+          }
+        },
+        "31": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 3
+          },
+          "secondes_par_action": {
+            "debout": 0.1
+          }
+        },
+        "37": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 1
+          },
+          "secondes_par_action": {
+            "debout": 0.0
+          }
+        },
+        "65": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 121
+          },
+          "secondes_par_action": {
+            "debout": 4.0
+          }
+        },
+        "69": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 136,
+            "boit": 29,
+            "mange": 16,
+            "couche": 4
+          },
+          "secondes_par_action": {
+            "debout": 4.5,
+            "boit": 1.0,
+            "mange": 0.5,
+            "couche": 0.1
+          }
+        },
+        "141": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 5
+          },
+          "secondes_par_action": {
+            "debout": 0.2
+          }
+        },
+        "159": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 3
+          },
+          "secondes_par_action": {
+            "debout": 0.1
+          }
+        },
+        "164": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 2
+          },
+          "secondes_par_action": {
+            "debout": 0.1
+          }
+        },
+        "189": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 8,
+            "couche": 8
+          },
+          "secondes_par_action": {
+            "debout": 0.3,
+            "couche": 0.3
+          }
+        },
+        "241": {
+          "dominant": "couche",
+          "frames_par_action": {
+            "couche": 8,
+            "debout": 4
+          },
+          "secondes_par_action": {
+            "couche": 0.3,
+            "debout": 0.1
+          }
+        },
+        "245": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 7
+          },
+          "secondes_par_action": {
+            "debout": 0.2
+          }
+        },
+        "259": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 10
+          },
+          "secondes_par_action": {
+            "debout": 0.3
+          }
+        },
+        "273": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 32
+          },
+          "secondes_par_action": {
+            "debout": 1.1
+          }
+        },
+        "280": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 6
+          },
+          "secondes_par_action": {
+            "debout": 0.2
+          }
+        },
+        "281": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 2
+          },
+          "secondes_par_action": {
+            "debout": 0.1
+          }
+        },
+        "285": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 65,
+            "boit": 15
+          },
+          "secondes_par_action": {
+            "debout": 2.2,
+            "boit": 0.5
+          }
+        },
+        "286": {
+          "dominant": "couche",
+          "frames_par_action": {
+            "couche": 3
+          },
+          "secondes_par_action": {
+            "couche": 0.1
+          }
+        },
+        "297": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 1
+          },
+          "secondes_par_action": {
+            "debout": 0.0
+          }
+        },
+        "306": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 106,
+            "boit": 4
+          },
+          "secondes_par_action": {
+            "debout": 3.5,
+            "boit": 0.1
+          }
+        },
+        "332": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 46,
+            "couche": 16,
+            "marche": 7
+          },
+          "secondes_par_action": {
+            "debout": 1.5,
+            "couche": 0.5,
+            "marche": 0.2
+          }
+        },
+        "333": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 180
+          },
+          "secondes_par_action": {
+            "debout": 6.0
+          }
+        },
+        "375": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 3
+          },
+          "secondes_par_action": {
+            "debout": 0.1
+          }
+        },
+        "377": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 13
+          },
+          "secondes_par_action": {
+            "debout": 0.4
+          }
+        },
+        "391": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 116,
+            "couche": 8
+          },
+          "secondes_par_action": {
+            "debout": 3.9,
+            "couche": 0.3
+          }
+        },
+        "402": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 129,
+            "boit": 10
+          },
+          "secondes_par_action": {
+            "debout": 4.3,
+            "boit": 0.3
+          }
+        },
+        "433": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 103
+          },
+          "secondes_par_action": {
+            "debout": 3.4
+          }
+        },
+        "460": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 2
+          },
+          "secondes_par_action": {
+            "debout": 0.1
+          }
+        },
+        "468": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 68
+          },
+          "secondes_par_action": {
+            "debout": 2.3
+          }
+        },
+        "472": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 46
+          },
+          "secondes_par_action": {
+            "debout": 1.5
+          }
+        },
+        "475": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 1
+          },
+          "secondes_par_action": {
+            "debout": 0.0
+          }
+        },
+        "484": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 31
+          },
+          "secondes_par_action": {
+            "debout": 1.0
+          }
+        },
+        "486": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 26
+          },
+          "secondes_par_action": {
+            "debout": 0.9
+          }
+        },
+        "504": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 1
+          },
+          "secondes_par_action": {
+            "debout": 0.0
+          }
+        },
+        "507": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 2
+          },
+          "secondes_par_action": {
+            "debout": 0.1
+          }
+        },
+        "509": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 4
+          },
+          "secondes_par_action": {
+            "debout": 0.1
+          }
+        },
+        "510": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 1
+          },
+          "secondes_par_action": {
+            "debout": 0.0
+          }
+        }
+      }
+    },
+    {
+      "video": "VIDEO-2026-08-24-13-55-36.mp4",
+      "output": "VIDEO-2026-08-24-13-55-36_behavior.mp4",
+      "frames_source": 920,
+      "frames_inferees": 460,
+      "stride": 2,
+      "fps_source": 59.97,
+      "fps_sortie": 29.98,
+      "processing_fps": 3.93,
+      "seconds": 116.9,
+      "tracks": 17,
+      "per_track": {
+        "2": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 458
+          },
+          "secondes_par_action": {
+            "debout": 15.3
+          }
+        },
+        "3": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 59
+          },
+          "secondes_par_action": {
+            "debout": 2.0
+          }
+        },
+        "4": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 326,
+            "couche": 26
+          },
+          "secondes_par_action": {
+            "debout": 10.9,
+            "couche": 0.9
+          }
+        },
+        "5": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 157,
+            "couche": 8
+          },
+          "secondes_par_action": {
+            "debout": 5.2,
+            "couche": 0.3
+          }
+        },
+        "6": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 1
+          },
+          "secondes_par_action": {
+            "debout": 0.0
+          }
+        },
+        "7": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 3
+          },
+          "secondes_par_action": {
+            "debout": 0.1
+          }
+        },
+        "11": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 12
+          },
+          "secondes_par_action": {
+            "debout": 0.4
+          }
+        },
+        "33": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 3
+          },
+          "secondes_par_action": {
+            "debout": 0.1
+          }
+        },
+        "34": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 3
+          },
+          "secondes_par_action": {
+            "debout": 0.1
+          }
+        },
+        "37": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 64
+          },
+          "secondes_par_action": {
+            "debout": 2.1
+          }
+        },
+        "40": {
+          "dominant": "couche",
+          "frames_par_action": {
+            "couche": 16
+          },
+          "secondes_par_action": {
+            "couche": 0.5
+          }
+        },
+        "95": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 20
+          },
+          "secondes_par_action": {
+            "debout": 0.7
+          }
+        },
+        "96": {
+          "dominant": "couche",
+          "frames_par_action": {
+            "couche": 16
+          },
+          "secondes_par_action": {
+            "couche": 0.5
+          }
+        },
+        "123": {
+          "dominant": "couche",
+          "frames_par_action": {
+            "couche": 2
+          },
+          "secondes_par_action": {
+            "couche": 0.1
+          }
+        },
+        "139": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 1
+          },
+          "secondes_par_action": {
+            "debout": 0.0
+          }
+        },
+        "160": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 3
+          },
+          "secondes_par_action": {
+            "debout": 0.1
+          }
+        },
+        "190": {
+          "dominant": "debout",
+          "frames_par_action": {
+            "debout": 1
+          },
+          "secondes_par_action": {
+            "debout": 0.0
+          }
+        }
+      }
+    }
+  ]
+}

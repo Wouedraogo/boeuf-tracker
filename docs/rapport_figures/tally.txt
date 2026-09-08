@@ -1,0 +1,4 @@
+frames=201
+standing=271
+lying=99
+eating=66

@@ -6,10 +6,13 @@ enum ModelKind: String, CaseIterable, Identifiable {
     case cbvd5Seg     = "boeuf_cbvd5_seg"
     case yolo26s640   = "boeuf_yolo26s_640"
     case yolo26s832   = "boeuf_yolo26s_832"
+    /// Warm-start Run A on merged CBVD-5 + CVB (adds `walking` class in principle).
+    /// mAP walking = 0.064 → walking essentiellement non appris. À tester quand même.
+    case yolo26s832Mixed = "boeuf_yolo26s_832_mixed"
     /// COCO pre-filter model (not shown in the picker; used internally by CowFilter).
     case cocoYolo26n  = "yolo26n"
 
-    static var pickable: [ModelKind] { [.cbvd5Lr001, .cbvd5Seg, .yolo26s640, .yolo26s832] }
+    static var pickable: [ModelKind] { [.cbvd5Lr001, .cbvd5Seg, .yolo26s640, .yolo26s832, .yolo26s832Mixed] }
 
     var id: String { rawValue }
 
@@ -19,6 +22,7 @@ enum ModelKind: String, CaseIterable, Identifiable {
         case .cbvd5Seg:   return "CBVD5 · seg"
         case .yolo26s640: return "YOLO26s · 640"
         case .yolo26s832: return "YOLO26s · 832"
+        case .yolo26s832Mixed: return "YOLO26s · 832 mixed (CVB+CBVD5)"
         case .cocoYolo26n: return "YOLO26n · COCO"
         }
     }

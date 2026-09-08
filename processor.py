@@ -38,23 +38,32 @@ from behavior_video import VideoBehavior
 #    - CBVD-5 (checkpoint barn, training/train_cbvd5.py) : 5 classes
 #    - X-CLIP (clefs directement FR via prompts) : identity
 # ─────────────────────────────────────────────────────────────
+#  Dictionnaire de traduction des comportements vers le francais.
+#  Couvre :
+#    - YOLO26 direct (standing, lying, eating, drinking, walking...)
+#    - CVB (paturage, 8 classes)
+#    - CBVD-5 (checkpoint barn, training/train_cbvd5.py) : 5 classes
+#    - X-CLIP (clefs directement FR via prompts) : identity
+# ─────────────────────────────────────────────────────────────
 _VIDEO_BEHAVIOR_FR = {
+    # ── Classes YOLO & Comportements unifies ─────────────────
+    "standing":              "debout",
+    "lying":                 "couche",
+    "eating":                "mange",
+    "drinking":              "boit",
+    "walking":               "marche",
+    "running":               "court",
+    "other":                 "",
     # ── CVB (paturage, 8 classes) ────────────────────────────
     "grazing":              "pature",
-    "walking":               "marche",
     "ruminating-standing":   "rumine debout",
     "ruminating-lying":      "rumine couche",
     "resting-standing":      "debout",
     "resting-lying":         "couche",
-    "drinking":              "boit",
-    "running":               "court",
     # ── CBVD-5 (barn, 5 classes) ─────────────────────────────
     # foraging = mange (couvre auge/foin/pature au sens Nature 2024).
-    "standing":              "debout",
-    "lying":                 "couche",
     "foraging":              "mange",
     "rumination":            "rumine",
-    # "drinking" deja couvert plus haut.
 }
 # Sous ce seuil de softmax on n'affiche rien pour la posture. Sur 8 classes
 # le hasard est a 0.125 → 0.35 filtre le bruit mais laisse passer une majorite
@@ -448,7 +457,7 @@ def detection_loop(args):
         )
         args.imgsz = _coreml_imgsz
         loaded_model_name = _os.path.basename(_yolo_coreml)
-    elif use_mlx:
+    elif use_mlx and (args.yolo_model.endswith(".safetensors") or args.yolo_model in ("yolo26s-seg.safetensors", "yolo26s-seg.pt", "yolo26n.pt")):
         info(f"[YOLO26-MLX] Utilisation de CattleDetectorMLX...")
         mlx_model = args.yolo_model if args.yolo_model != "yolo11s-seg.pt" else "yolo26s-seg.safetensors"
         detector = CattleDetectorMLX(
@@ -817,6 +826,11 @@ def detection_loop(args):
                     boxes = result.boxes.xyxy.cpu().numpy()
                     track_ids = result.boxes.id.int().cpu().numpy()
                     confs = result.boxes.conf.cpu().numpy()
+                    classes = (
+                        result.boxes.cls.int().cpu().numpy()
+                        if hasattr(result.boxes, "cls") and result.boxes.cls is not None
+                        else None
+                    )
                     masks_data = (
                         result.masks.data.cpu().numpy()
                         if result.masks is not None and len(result.masks) > 0
@@ -844,8 +858,8 @@ def detection_loop(args):
                     # et ne peut pas servir de clé pour le worker asynchrone.
                     crops_to_submit: dict[int, np.ndarray] = {}  # {track_id: crop}
                     det_idx_to_tid: dict[int, int] = {}
-                    # Comportement vidéo courant par piste (rempli ci-dessous)
-                    # {tid: (label_EN, confidence)} — sortie brute du R(2+1)D
+                    # Comportement YOLO direct (spatial) & vidéo (temporel)
+                    yolo_beh_by_tid: dict[int, tuple[str, float]] = {}
                     video_beh_by_tid: dict[int, tuple[str, float]] = {}
 
                     for det_idx, (box, tid, conf) in enumerate(zip(boxes, track_ids, confs)):
@@ -857,6 +871,14 @@ def detection_loop(args):
                         det_idx_to_tid[det_idx] = int(tid)
                         track_age[int(tid)] = track_age.get(int(tid), 0) + 1
                         crop = frame[y1:y2, x1:x2]
+
+                        # Comportement direct YOLO si le modèle a des classes comportementales
+                        if classes is not None and det_idx < len(classes):
+                            cls_id = int(classes[det_idx])
+                            cls_raw = detector.names.get(cls_id, "") if hasattr(detector, "names") else ""
+                            cls_fr = _VIDEO_BEHAVIOR_FR.get(cls_raw.lower(), cls_raw)
+                            if cls_fr:
+                                yolo_beh_by_tid[int(tid)] = (cls_fr, float(conf))
                         # Masque de segmentation pour ce det, en coordonnees crop.
                         # Passe au classifieur d'action pour blacker le fond (barreaux,
                         # foin, congeneres) et rester dans la distribution de training.
@@ -1071,9 +1093,6 @@ def detection_loop(args):
                             emb = emb_by_tid.get(tid_int)
                             # Imagette polluee par un congenere -> on ne met pas
                             # a jour l'empreinte de reference. Sans ce garde-fou,
-                            # l'empreinte d'un bovin partiellement masque derive
-                            # vers celle de l'occulteur et il finit par ne plus
-                            # se reconnaitre lui-meme.
                             if (emb is not None and det_idx < len(occl_frac)
                                     and occl_frac[det_idx] > OCCLUSION_SKIP_FRAC):
                                 emb = None
@@ -1110,17 +1129,22 @@ def detection_loop(args):
                         breed_name = animal_data.get("breed") or "Indeterminee"
                         breed_conf = animal_data.get("breed_confidence", 0)
 
-                        # Nom propre (stable cross-session) via NameGenerator
+                        # Nom propre unique (stable cross-session) via NameGenerator
                         display_name = name_gen.get(name) if name != "?" else "?"
 
-                        # Comportement du R(2+1)D : (label_EN, conf) ou None.
-                        # Sous _VIDEO_BEHAVIOR_MIN_CONF on n'affiche rien —
-                        # laisse le prenom seul plutot qu'une posture douteuse.
+                        # Comportement : priorité au modèle vidéo si actif et conf suffisante, sinon comportement YOLO direct
                         _vbt = video_beh_by_tid.get(int(tid))
+                        _ybt = yolo_beh_by_tid.get(int(tid))
                         if _vbt is not None and _vbt[1] >= _VIDEO_BEHAVIOR_MIN_CONF:
                             behavior_label = _VIDEO_BEHAVIOR_FR.get(_vbt[0], _vbt[0])
+                            behavior_conf = float(_vbt[1])
+                        elif _ybt is not None and _ybt[1] >= 0.20:
+                            behavior_label = _ybt[0]
+                            behavior_conf = float(_ybt[1])
                         else:
                             behavior_label = ""
+                            behavior_conf = 0.0
+
                         label = _strip_accents(f"{display_name}  {behavior_label}".strip())
                         font_scale = 0.45
                         font_thick = 1
@@ -1130,7 +1154,7 @@ def detection_loop(args):
                         ly2 = ly1 + th + 2 * pad_y
                         cv2.rectangle(annotated, (x1, ly1), (x1 + tw + 2 * pad_x, ly2), color, -1)
                         cv2.putText(annotated, label, (x1 + pad_x, ly2 - pad_y),
-                                    cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 0, 0), font_thick, cv2.LINE_AA)
+                                     cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 0, 0), font_thick, cv2.LINE_AA)
                         active.append({
                             "name": display_name,
                             "key": name,  # la cle interne (Boeuf_001), pour debug
@@ -1147,12 +1171,7 @@ def detection_loop(args):
                             fh, fw = frame.shape[:2]
                             cx_norm = (x1 + x2) / 2.0 / max(fw, 1)
                             cy_norm = (y1 + y2) / 2.0 / max(fh, 1)
-                            # Behavior lookup
-                            behavior_now = "active"
-                            for b in STATE.get("behavior", []):
-                                if b.get("track_id") == int(tid):
-                                    behavior_now = b.get("action", "active")
-                                    break
+                            behavior_now = behavior_label if behavior_label else "active"
                             try:
                                 analytics.push_detection(DetectionSample(
                                     frame=frame_idx,
@@ -1168,25 +1187,51 @@ def detection_loop(args):
                             except Exception:
                                 pass
 
-                    # Comportement — 100 % modele R(2+1)D. Plus de posture.py,
-                    # plus de BehaviorAnalyzer. On expose STATE["behavior"] a
-                    # partir de video_beh_by_tid pour que /api/stats, analytics
-                    # et le dashboard restent alimentes sans changer leur contrat.
+                    # Comportement — fusion VideoBehavior + YOLO26 direct.
+                    # On expose STATE["behavior"] a partir des predictions pour que
+                    # /api/stats, analytics et le dashboard restent alimentes.
                     _behavior_list: list[dict] = []
                     _names_by_tid = STATE.get("_track_names", {})
                     for _tid_i in map(int, track_ids):
                         _vbt = video_beh_by_tid.get(_tid_i)
-                        if _vbt is None:
+                        _ybt = yolo_beh_by_tid.get(_tid_i)
+                        if _vbt is not None and _vbt[1] >= _VIDEO_BEHAVIOR_MIN_CONF:
+                            _label_raw, _conf = _vbt
+                            _label_fr = _VIDEO_BEHAVIOR_FR.get(_label_raw, _label_raw)
+                        elif _ybt is not None:
+                            _label_fr, _conf = _ybt
+                        else:
                             continue
-                        _label_raw, _conf = _vbt
-                        # R(2+1)D emet des cles anglaises (grazing, walking...),
-                        # X-CLIP emet directement les cles FR de son dict de
-                        # prompts (pature, mange auge...). Le lookup renvoie la
-                        # cle telle quelle si elle n'est pas dans la map.
-                        _label_fr = _VIDEO_BEHAVIOR_FR.get(_label_raw, _label_raw)
+
+                        if not _label_fr:
+                            continue
+
+                        _raw_name = _names_by_tid.get(_tid_i, "?")
+                        _proper_name = name_gen.get(_raw_name) if _raw_name != "?" else "?"
+
                         # Log une ligne UNIQUEMENT quand le label change pour ce
-                        # bovin (evite le spam). Inclut la confiance pour que tu
-                        # ajustes _VIDEO_BEHAVIOR_MIN_CONF si besoin.
+                        # bovin (evite le spam).
+                        _prev = _last_beh_logged.get(_tid_i)
+                        if _prev != _label_fr:
+                            _last_beh_logged[_tid_i] = _label_fr
+                            _nm = _proper_name if _proper_name != "?" else f"tid={_tid_i}"
+                            info(f"[Behavior] {_nm} → {_label_fr} ({_conf:.2f})")
+
+                        _behavior_list.append({
+                            "track_id": _tid_i,
+                            "name": _proper_name,
+                            "action": _label_fr,
+                            "confidence": round(float(_conf), 2),
+                        })
+                    STATE["behavior"] = _behavior_list
+                    emit_isolation_alerts(boxes, track_ids, frame.shape)
+
+                    # Nettoyage memoire des pistes disparues
+                    if _video_behavior is not None and hasattr(_video_behavior, "forget"):
+                        for old_tid in list(_last_beh_logged.keys()):
+                            if old_tid not in current_tids:
+                                _video_behavior.forget(old_tid)
+                                _last_beh_logged.pop(old_tid, None)       # ajustes _VIDEO_BEHAVIOR_MIN_CONF si besoin.
                         _log_key = f"{_label_fr}|{_conf:.2f}"
                         _prev = _last_beh_logged.get(_tid_i)
                         if _prev != _label_fr:  # compare que sur le label, pas la conf

@@ -20,16 +20,19 @@ struct Detection: Identifiable {
 }
 
 /// Loads a YOLO26 CoreML model (Ultralytics export with NMS fused).
-/// Input : image 640x640 RGB.
-/// Detect output: MultiArray [1, 300, 6]  = (x1, y1, x2, y2, score, class) in input pixels (0..640).
+/// Input : image NxN RGB, N read from the model's `imageConstraint` at load time
+///         (most CBVD5 models are 640, the mixed model is 832, etc.).
+/// Detect output: MultiArray [1, 300, 6]  = (x1, y1, x2, y2, score, class) in input pixels (0..N).
 /// Seg output:    MultiArray [1, 300, 38] = same 6 + 32 mask coefficients
-///          plus  MultiArray [1, 32, 160, 160] = mask prototypes.
+///          plus  MultiArray [1, 32, N/4, N/4] = mask prototypes.
 final class Detector {
     private let model: MLModel
     private let inputName: String
     private let outputName: String
     private let protoName: String?
-    let inputSize: Int = 640
+    /// Model's native input side length (square). Read from the CoreML spec so
+    /// switching to a model exported at a different imgsz Just Works.
+    let inputSize: Int
     let kind: ModelKind
     /// Class-id → human name, parsed from Ultralytics `names` metadata.
     let classNames: [Int: String]
@@ -52,6 +55,16 @@ final class Detector {
         }
         self.model = try MLModel(contentsOf: url, configuration: config)
         self.inputName = model.modelDescription.inputDescriptionsByName.keys.first ?? "image"
+
+        // Read the model's expected input side length from its imageConstraint.
+        // Fixes "Image size 640x640 not in allowed set of image sizes" when a model
+        // exported at 832 (like yolo26s_832_mixed) is fed a 640 letterbox.
+        let inputDesc = model.modelDescription.inputDescriptionsByName[inputName]
+        if let c = inputDesc?.imageConstraint {
+            self.inputSize = c.pixelsWide   // square models: pixelsWide == pixelsHigh
+        } else {
+            self.inputSize = 640
+        }
 
         var det: String?
         var proto: String?

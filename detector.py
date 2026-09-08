@@ -94,7 +94,6 @@ class CattleDetector:
         half: bool | None = None,
         extra_classes: bool = True,
     ):
-        self.classes = list(CATTLE_CLASS_IDS) if extra_classes else [COW_CLASS_ID]
         if device is None:
             device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
         self.device = device
@@ -106,6 +105,28 @@ class CattleDetector:
 
         info(f"[YOLO] Chargement de {model_name} sur {device} (FP16={half})...")
         self.model = YOLO(model_name)
+
+        # Auto-détection : modèle de comportement bovin custom (7 classes) vs COCO générique
+        names = getattr(self.model, "names", {})
+        if isinstance(names, dict):
+            class_names_list = list(names.values())
+        elif isinstance(names, (list, tuple)):
+            class_names_list = list(names)
+        else:
+            class_names_list = []
+
+        behavior_keywords = {"standing", "lying", "eating", "drinking", "walking", "grazing", "foraging", "rumination"}
+        # Si le modèle contient nos classes de comportement ou est un modèle spécifique bovins (<=15 classes sans 'person')
+        if any(c in behavior_keywords for c in class_names_list) or (len(class_names_list) > 0 and len(class_names_list) <= 15 and "person" not in class_names_list):
+            self.is_behavior_model = True
+            self.classes = None  # Accepte toutes les classes du modèle (ce sont toutes des bovins)
+            self.names = names if isinstance(names, dict) else {i: n for i, n in enumerate(names)}
+            ok(f"[YOLO] Modèle de comportement bovin actif ({len(self.names)} classes : {list(self.names.values())})")
+        else:
+            self.is_behavior_model = False
+            # Modèle COCO standard : filtrer strictement sur les bovins
+            self.classes = list(CATTLE_CLASS_IDS) if extra_classes else [COW_CLASS_ID]
+            self.names = names if isinstance(names, dict) else {i: n for i, n in enumerate(names)}
 
         # Conversion FP16 UNE SEULE FOIS sur les poids (evite le warning
         # "'half' is deprecated, use 'quantize' instead" d'Ultralytics 8.4+).
@@ -219,6 +240,28 @@ class CattleDetectorMLX:
         # IMPORTANT: utiliser yolo26mlx.YOLO, pas ultralytics.YOLO
         from yolo26mlx import YOLO as MLX_YOLO
         self.model = MLX_YOLO(model_path)
+
+        names = getattr(self.model, "names", {})
+        if isinstance(names, dict):
+            class_names_list = list(names.values())
+        elif isinstance(names, (list, tuple)):
+            class_names_list = list(names)
+        else:
+            class_names_list = []
+
+        behavior_keywords = {"standing", "lying", "eating", "drinking", "walking", "grazing", "foraging", "rumination"}
+        if any(c in behavior_keywords for c in class_names_list) or (len(class_names_list) > 0 and len(class_names_list) <= 15 and "person" not in class_names_list):
+            self.is_behavior_model = True
+            self.classes = None
+            self.names = names if isinstance(names, dict) else {i: n for i, n in enumerate(names)}
+            ok(f"[YOLO26-MLX] Modele de comportement bovin actif ({len(self.names)} classes)")
+        else:
+            self.is_behavior_model = False
+            self.classes = np.array(
+                CATTLE_CLASS_IDS if extra_classes else (COW_CLASS_ID,)
+            )
+            self.names = names if isinstance(names, dict) else {i: n for i, n in enumerate(names)}
+
         ok(f"[YOLO26-MLX] Modele pret (Metal GPU)")
 
     def detect(self, frame, persist: bool = True, conf: float = 0.25, imgsz: int = 960):
@@ -261,22 +304,20 @@ class CattleDetectorMLX:
                     return _empty_result_mlx()
 
                 xyxy_all = np.array(boxes.xyxy)
-                cls_all = np.array(boxes.cls) if boxes.cls is not None else None
-                conf_all = np.array(boxes.conf) if boxes.conf is not None else None
+                cls_all = np.array(boxes.cls) if boxes.cls is not None else np.zeros(len(xyxy_all))
+                conf_all = np.array(boxes.conf) if boxes.conf is not None else np.ones(len(xyxy_all))
 
-                # Filtrer sur les classes assimilees a du betail (cf.
-                # CATTLE_CLASS_IDS : cow, et par defaut horse/sheep que COCO
-                # confond avec des bovins sur des vues de troupeau).
-                cow_mask = (
-                    np.isin(cls_all, self.classes)
-                    if cls_all is not None
-                    else np.ones(len(xyxy_all), dtype=bool)
-                )
+                if self.is_behavior_model or self.classes is None:
+                    cow_mask = np.ones(len(xyxy_all), dtype=bool)
+                else:
+                    cow_mask = np.isin(cls_all, self.classes)
+
                 if not cow_mask.any():
                     return _empty_result_mlx()
 
                 xyxy_cows = xyxy_all[cow_mask]
-                conf_cows = conf_all[cow_mask] if conf_all is not None else np.ones(len(xyxy_cows))
+                conf_cows = conf_all[cow_mask]
+                cls_cows = cls_all[cow_mask]
 
                 masks_data = None
                 if pred.masks is not None and pred.masks.data is not None:
@@ -288,13 +329,14 @@ class CattleDetectorMLX:
                 if len(keep) < len(xyxy_cows):
                     xyxy_cows = xyxy_cows[keep]
                     conf_cows = conf_cows[keep]
+                    cls_cows = cls_cows[keep]
                     if masks_data is not None:
                         masks_data = masks_data[keep]
 
                 # Appliquer le tracker IoU sur les boxes de bovins uniquement
                 ids_cows = self._iou_tracker.update(xyxy_cows)
 
-                return _MLXResult(xyxy_cows, ids_cows, conf_cows, masks_data)
+                return _MLXResult(xyxy_cows, ids_cows, conf_cows, masks_data, cls_cows)
             except Exception as e:
                 if attempt < 1:
                     warn(f"[YOLO26-MLX] Retry {attempt+1} after error: {e}")
@@ -306,15 +348,16 @@ class CattleDetectorMLX:
 class _MLXResult:
     """Result object compatible with Ultralytics Result for cows only."""
 
-    def __init__(self, xyxy, ids, confs, masks_data):
+    def __init__(self, xyxy, ids, confs, masks_data, cls=None):
         self.xyxy = xyxy
         self.id = ids
         self.conf = confs
         self.masks_data = masks_data
+        self.cls = cls
 
     @property
     def boxes(self):
-        return _MLXBoxes(self.xyxy, self.id, self.conf)
+        return _MLXBoxes(self.xyxy, self.id, self.conf, self.cls)
 
     @property
     def masks(self):
@@ -385,14 +428,15 @@ class _CpuView:
 class _MLXBoxes:
     """Minimal boxes implementation compatible with processor.py usage."""
 
-    def __init__(self, xyxy, ids, confs):
+    def __init__(self, xyxy, ids, confs, cls=None):
         # Wrap in _NumpyWrapper so .cpu().numpy() works (processor.py pattern)
         self.xyxy = _NumpyWrapper(xyxy) if xyxy is not None else None
         self.id = _NumpyWrapper(ids) if ids is not None else None
         self.conf = _NumpyWrapper(confs) if confs is not None else None
-        self.cls = np.zeros(len(xyxy))  # dummy, not used in processor
+        self.cls = _NumpyWrapper(cls if cls is not None else np.zeros(len(xyxy)))
 
     def __len__(self):
+        return len(self.xyxy._arr) if self.xyxy is not None else 0
         return len(self.xyxy._arr) if self.xyxy is not None else 0
 
 

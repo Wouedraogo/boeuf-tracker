@@ -326,20 +326,42 @@ body {
     font-family: var(--font-mono);
 }
 
-/* ── Badges (comportement) ── */
+.card-header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* ── Badges (comportement & statut) ── */
 .badge {
     display: inline-block;
-    padding: 0.1rem 0.5rem;
+    padding: 0.15rem 0.55rem;
     border-radius: 99px;
-    font-size: 0.65rem;
+    font-size: 0.7rem;
     font-weight: 600;
     text-transform: capitalize;
+    letter-spacing: 0.02em;
 }
-.badge-grazing  { background: var(--accent-bg); color: var(--accent); }
-.badge-drinking { background: var(--blue-bg); color: var(--blue); }
-.badge-lying    { background: var(--amber-bg); color: var(--amber); }
-.badge-running  { background: var(--rose-bg); color: var(--rose); }
-.badge-neutral  { background: var(--bg-input); color: var(--text-muted); }
+.badge-grazing   { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent); }
+.badge-drinking  { background: rgba(6, 182, 212, 0.15); color: #06b6d4; border: 1px solid #06b6d4; }
+.badge-lying     { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber); }
+.badge-standing  { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue); }
+.badge-walking   { background: rgba(168, 85, 247, 0.15); color: #a855f7; border: 1px solid #a855f7; }
+.badge-running   { background: var(--rose-bg); color: var(--rose); border: 1px solid var(--rose); }
+.badge-neutral   { background: var(--bg-input); color: var(--text-muted); }
+.badge-active    { background: var(--accent-bg); color: var(--accent); font-size: 0.75rem; padding: 0.2rem 0.6rem; }
+
+.animal-status-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.animal-key {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    margin-left: 0.35rem;
+}
 
 /* ── Modal ── */
 .modal {

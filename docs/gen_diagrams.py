@@ -75,7 +75,7 @@ def diagram_architecture():
     # Pipeline IA
     box(ax, 6.7, 3.2, 1.4, 1.2, "YOLO\nDétection", C_BLUE, fontsize=9)
     box(ax, 8.3, 3.2, 1.4, 1.2, "Tracker\nIoU", C_BLUE, fontsize=9)
-    box(ax, 9.9, 3.2, 1.6, 1.2, "DINOv2\nRe-ID", C_AMBER, fontsize=9)
+    box(ax, 9.9, 3.2, 1.6, 1.2, "MegaDesc.\nRe-ID", C_AMBER, fontsize=9)
 
     arrow(ax, 7.4, 4.8, 7.4, 4.4, C_MUTED)
     arrow(ax, 8.1, 3.8, 8.3, 3.8, C_MUTED)
@@ -111,7 +111,7 @@ def diagram_pipeline():
         (2.0, "YOLO\nDétection", C_BLUE, "~12 ms\nMLX Metal"),
         (3.7, "Tracker\nIoU", C_BLUE, "~1 ms\nassocie ID"),
         (5.4, "Crop", C_CYAN, "~0.1 ms\nextrait zone"),
-        (7.1, "Re-ID\nDINOv2", C_AMBER, "~5 ms\n(async)"),
+        (7.1, "Re-ID\nMegaDesc.", C_AMBER, "~12 ms\n(par lot)"),
         (8.8, "Race\nSigLIP-2", C_ROSE, "~22 ms\n(nouveau)"),
         (10.5, "JPEG\nannoté", C_ACCENT, "~3 ms"),
     ]
@@ -143,18 +143,18 @@ def diagram_reid():
     ax.set_xlim(0, 10)
     ax.set_ylim(0, 6)
     ax.axis("off")
-    ax.set_title("Identification individuelle (Re-ID) par embeddings DINOv2",
+    ax.set_title("Identification individuelle (Re-ID) par empreintes MegaDescriptor",
                  fontsize=13, fontweight="bold", pad=15)
 
     # Crop entrée
     box(ax, 0.3, 3.5, 1.8, 1.5, "Crop du\nbovin\n(200×300 px)", C_CYAN, fontsize=9, bold=True)
 
     # DINOv2
-    box(ax, 2.6, 3.5, 1.8, 1.5, "DINOv2-small\nMeta AI\n(self-supervised)", C_BLUE, fontsize=9, bold=True)
+    box(ax, 2.6, 3.5, 1.8, 1.5, "MegaDescriptor\nT-224\n(re-ID animale)", C_BLUE, fontsize=9, bold=True)
     arrow(ax, 2.1, 4.25, 2.6, 4.25, C_ACCENT)
 
     # Embedding
-    box(ax, 4.9, 3.5, 1.8, 1.5, "Embedding\n464 dimensions\n(vecteur)", C_AMBER, fontsize=9, bold=True)
+    box(ax, 4.9, 3.5, 1.8, 1.5, "Empreinte\n768 dimensions\n+ couleur + texture", C_AMBER, fontsize=9, bold=True)
     arrow(ax, 4.4, 4.25, 4.9, 4.25, C_ACCENT)
 
     # Comparaison
@@ -162,14 +162,14 @@ def diagram_reid():
     arrow(ax, 6.7, 4.25, 7.2, 4.25, C_ACCENT)
 
     # Branches
-    box(ax, 6.0, 0.5, 3, 1.2, "sim ≥ 0.70 → BOVIN CONNU\n(nom existant conservé)", C_ACCENT, fontsize=9, bold=True)
-    box(ax, 1.0, 0.5, 3.5, 1.2, "sim < 0.70 → NOUVEAU BOVIN\n(nouveau nom créé)", C_ROSE, fontsize=9, bold=True)
+    box(ax, 6.0, 0.5, 3, 1.2, "sim ≥ 0.55 → BOVIN CONNU\n(nom existant conservé)", C_ACCENT, fontsize=9, bold=True)
+    box(ax, 1.0, 0.5, 3.5, 1.2, "sim < 0.55 → NOUVEAU BOVIN\n(nouveau nom créé)", C_ROSE, fontsize=9, bold=True)
 
     arrow(ax, 7.5, 3.5, 7.5, 1.7, C_ACCENT)
     arrow(ax, 8.5, 3.5, 8.5, 1.7, C_ACCENT)
 
     # Seuil
-    ax.text(5, 2.2, "Seuil de similarité : 0.70",
+    ax.text(5, 2.2, "Seuil de similarité : 0.55",
             ha="center", fontsize=10, color=C_AMBER, fontweight="bold",
             bbox=dict(boxstyle="round,pad=0.3", facecolor="#fffbeb", edgecolor=C_AMBER))
 

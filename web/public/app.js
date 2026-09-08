@@ -28,16 +28,23 @@ function escapeHtml(s) {
 }
 
 const BEHAVIOR_BADGES = {
+    'mange': 'badge-grazing',
     'pâture': 'badge-grazing',
+    'pature': 'badge-grazing',
+    'foraging': 'badge-grazing',
+    'eating': 'badge-grazing',
     'boit': 'badge-drinking',
+    'drinking': 'badge-drinking',
     'couché': 'badge-lying',
+    'couche': 'badge-lying',
+    'lying': 'badge-lying',
     'rumine': 'badge-lying',
-    'se couche': 'badge-lying',
-    'se lève': 'badge-lying',
+    'debout': 'badge-standing',
+    'standing': 'badge-standing',
+    'marche': 'badge-walking',
+    'walking': 'badge-walking',
     'court': 'badge-running',
-    'rué': 'badge-running',
-    'immobile': 'badge-neutral',
-    'marche': 'badge-neutral',
+    'running': 'badge-running',
 };
 
 // ─── Polling stats (1s) ─────────────────────────────────────────
@@ -59,9 +66,6 @@ async function refreshStats() {
         // Changements en attente
         const desired = data.desired || {};
         const pending = [];
-        if (desired.imgsz != null) pending.push(`imgsz=${desired.imgsz}`);
-        if (desired.embed_every != null) pending.push(`embed=${desired.embed_every}`);
-        if (desired.threshold != null) pending.push(`th=${desired.threshold}`);
         if (desired.conf != null) pending.push(`conf=${desired.conf}`);
         if (desired.yolo_model != null) pending.push(`model=${desired.yolo_model}`);
         const pendingEl = $('meta-pending');
@@ -74,22 +78,9 @@ async function refreshStats() {
 
         // Sync controls avec valeurs courantes
         if (data.current) {
-            if (data.current.imgsz != null) {
-                document.querySelectorAll('[data-imgsz]').forEach(btn => {
-                    btn.classList.toggle('active', parseInt(btn.dataset.imgsz) === data.current.imgsz);
-                });
-            }
-            if (data.current.threshold != null && !$('setting-threshold').matches(':active')) {
-                $('setting-threshold').value = data.current.threshold;
-                $('setting-threshold-val').textContent = data.current.threshold.toFixed(2);
-            }
             if (data.current.conf != null && !$('setting-conf').matches(':active')) {
                 $('setting-conf').value = data.current.conf;
                 $('setting-conf-val').textContent = data.current.conf.toFixed(2);
-            }
-            if (data.current.embed_every != null && !$('setting-embed').matches(':active')) {
-                $('setting-embed').value = data.current.embed_every;
-                $('setting-embed-val').textContent = data.current.embed_every;
             }
             if (data.current.yolo_model && $('setting-model').value !== data.current.yolo_model) {
                 $('setting-model').value = data.current.yolo_model;
@@ -107,24 +98,36 @@ async function refreshStats() {
             if (opts.includes(data.device)) $('device-select').value = data.device;
         }
 
-        // ── Animaux (avec race) ──
+        // ── Animaux en direct & Comportements unifiés ──
         const active = data.active || [];
+        const behaviors = data.behavior || [];
+        const behByTid = {};
+        const behByName = {};
+        behaviors.forEach(b => {
+            if (b.track_id != null) behByTid[b.track_id] = b.action;
+            if (b.name) behByName[b.name] = b.action;
+        });
+
         $('active-count').textContent = active.length;
         $('animal-list').innerHTML = active.length === 0
-            ? '<li class="list-empty">Aucun animal visible</li>'
+            ? '<li class="list-empty">Aucun bovin visible</li>'
             : active.map(a => {
-                const breed = a.breed || '';
-                const breedConf = a.breed_confidence ? ` (${Math.round(a.breed_confidence * 100)}%)` : '';
+                const action = behByTid[a.track_id] || behByName[a.name] || '';
+                const badgeCls = BEHAVIOR_BADGES[action.toLowerCase()] || 'badge-neutral';
+                const keyTag = a.key && a.key !== a.name ? `<span class="animal-key">(${escapeHtml(a.key)})</span>` : '';
                 return `<li class="animal-item">
                     <span class="animal-name">
-                        <span>${escapeHtml(a.name)}</span>
-                        ${breed ? `<span class="animal-breed">${escapeHtml(breed)}${breedConf}</span>` : ''}
+                        <strong>${escapeHtml(a.name)}</strong>
+                        ${keyTag}
                     </span>
-                    <span class="animal-conf">${(a.conf * 100).toFixed(0)}%</span>
+                    <div class="animal-status-group">
+                        ${action ? `<span class="badge ${badgeCls}">${escapeHtml(action)}</span>` : ''}
+                        <span class="animal-conf">${(a.conf * 100).toFixed(0)}%</span>
+                    </div>
                 </li>`;
             }).join('');
 
-        // ── Événements (objets: {kind,text,name,ts}) — on filtre le bruit systeme ──
+        // ── Événements (objets: {kind,text,name,ts}) ──
         const EVENT_ICON = {
             arrival: '＋', return: '↻', departure: '−',
             behavior: '•', alert: '⚠', system: '⚙',
@@ -134,7 +137,7 @@ async function refreshStats() {
             .filter(e => e.kind !== 'system');
         $('event-list').innerHTML = ev.length === 0
             ? '<li class="list-empty">Aucun événement</li>'
-            : ev.map(e => {
+            : ev.slice(0, 15).map(e => {
                 const cls = 'event-' + (e.kind || 'system');
                 const icon = EVENT_ICON[e.kind] || '·';
                 const t = e.ts ? new Date(e.ts * 1000)
@@ -144,19 +147,6 @@ async function refreshStats() {
                     <span class="event-icon">${icon}</span>
                     <span class="event-text">${escapeHtml(e.text || '')}</span>
                     <span class="event-time">${t}</span>
-                </li>`;
-            }).join('');
-
-        // ── Activités ──
-        const bh = data.behavior || [];
-        $('behavior-list').innerHTML = bh.length === 0
-            ? '<li class="list-empty">Aucune activité</li>'
-            : bh.map(b => {
-                const badgeCls = BEHAVIOR_BADGES[b.action] || 'badge-neutral';
-                return `<li class="animal-item">
-                    <span>${escapeHtml(b.name)}</span>
-                    <span class="badge ${badgeCls}">${escapeHtml(b.action)}</span>
-                    <span class="animal-conf">${b.speed}px/s</span>
                 </li>`;
             }).join('');
     } catch (e) {}
@@ -269,29 +259,15 @@ $('device-select').addEventListener('change', async () => {
 });
 
 // ─── Reset DB modal ─────────────────────────────────────────────
-$('btn-reset-db').addEventListener('click', () => $('modal-reset').showModal());
-
-let skeletonOn = false;
-$('btn-skeleton').addEventListener('click', async () => {
-    try {
-        const res = await fetch('/api/skeleton', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ enabled: !skeletonOn }),
-        });
-        const data = await res.json();
-        skeletonOn = !!data.show_skeleton;
-        $('btn-skeleton').classList.toggle('active', skeletonOn);
-    } catch (e) {}
-});
-$('btn-reset-cancel').addEventListener('click', () => $('modal-reset').close());
-$('btn-reset-confirm').addEventListener('click', async (e) => {
+if ($('btn-reset-db')) $('btn-reset-db').addEventListener('click', () => $('modal-reset').showModal());
+if ($('btn-reset-cancel')) $('btn-reset-cancel').addEventListener('click', () => $('modal-reset').close());
+if ($('btn-reset-confirm')) $('btn-reset-confirm').addEventListener('click', async (e) => {
     e.preventDefault();
     try {
         await fetch('/api/db/reset', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
         $('modal-reset').close();
         const status = $('upload-status');
-        status.textContent = 'Base purgée'; status.style.color = 'var(--accent)';
+        if (status) { status.textContent = 'Base purgée'; status.style.color = 'var(--accent)'; }
     } catch (err) { alert('Erreur: ' + err.message); }
 });
 
@@ -302,21 +278,18 @@ async function loadSettings() {
         const data = await res.json();
         const cur = data.current || {};
         const sel = $('setting-model');
-        sel.innerHTML = '';
-        (data.models_available || []).forEach(m => {
-            const opt = document.createElement('option');
-            opt.value = m; opt.textContent = m; sel.appendChild(opt);
-        });
-        if (cur.yolo_model) sel.value = cur.yolo_model;
-        $('setting-embed').value = cur.embed_every || 10;
-        $('setting-embed-val').textContent = cur.embed_every || 10;
-        $('setting-threshold').value = cur.threshold || 0.65;
-        $('setting-threshold-val').textContent = (cur.threshold || 0.65).toFixed(2);
-        $('setting-conf').value = cur.conf || 0.40;
-        $('setting-conf-val').textContent = (cur.conf || 0.40).toFixed(2);
-        document.querySelectorAll('[data-imgsz]').forEach(btn => {
-            btn.classList.toggle('active', parseInt(btn.dataset.imgsz) === cur.imgsz);
-        });
+        if (sel) {
+            sel.innerHTML = '';
+            (data.models_available || []).forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m; opt.textContent = m; sel.appendChild(opt);
+            });
+            if (cur.yolo_model) sel.value = cur.yolo_model;
+        }
+        if ($('setting-conf')) {
+            $('setting-conf').value = cur.conf || 0.25;
+            $('setting-conf-val').textContent = (cur.conf || 0.25).toFixed(2);
+        }
     } catch (e) {}
 }
 loadSettings();
@@ -325,96 +298,38 @@ async function pushSetting(payload) {
     if (pushInFlight) return;
     pushInFlight = true;
     const status = $('settings-status');
-    status.textContent = '⏳ envoi...';
-    status.style.color = 'var(--amber)';
+    if (status) {
+        status.textContent = '⏳ envoi...';
+        status.style.color = 'var(--amber)';
+    }
     try {
         await fetch('/api/settings', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
-        status.textContent = '✓ appliqué'; status.style.color = 'var(--accent)';
-        setTimeout(() => { status.textContent = ''; }, 2500);
-    } catch (e) { status.textContent = '✗ erreur'; status.style.color = 'var(--rose)'; }
+        if (status) { status.textContent = '✓ appliqué'; status.style.color = 'var(--accent)'; setTimeout(() => { status.textContent = ''; }, 2500); }
+    } catch (e) { if (status) { status.textContent = '✗ erreur'; status.style.color = 'var(--rose)'; } }
     finally { pushInFlight = false; }
 }
 
-// ─── Auto-switch CoreML ↔ imgsz ────────────────────────────────
-// Le .mlpackage a une input shape figée à l'export. On expose deux variantes
-// par archi (yolo26{s,m}-seg-640/1280.mlpackage) et on aligne modèle ↔
-// résolution : le couple reste toujours cohérent (-640 lancé à 1280 = upscale
-// inutile → évité). L'archi choisie (s ou m) est CONSERVEE lors du switch.
-const CORE_ML_SIZES = [640, 1280];
-const CORE_ML_RE = /^(yolo26[sm]-seg)-(\d+)\.mlpackage$/;
-function coreMlSizeFromName(name) {
-    if (!name) return null;
-    const m = name.match(CORE_ML_RE);
-    return m ? parseInt(m[2], 10) : null;
-}
-function coreMlArchFromName(name) {
-    // Retourne "yolo26s-seg" ou "yolo26m-seg" (ou null si pas CoreML).
-    if (!name) return null;
-    const m = name.match(CORE_ML_RE);
-    return m ? m[1] : null;
-}
-function coreMlNameFor(arch, size) { return `${arch}-${size}.mlpackage`; }
-function nearestCoreMlSize(size) {
-    // Cran demandé → variante ≥ dispo, sinon la plus grande.
-    // 320/416/640 → 640 ; 960/1280 → 1280.
-    return CORE_ML_SIZES.find(s => s >= size) ?? CORE_ML_SIZES[CORE_ML_SIZES.length - 1];
-}
-function isCoreMlModel(name) { return coreMlSizeFromName(name) != null; }
-function setActiveImgszBtn(size) {
-    document.querySelectorAll('[data-imgsz]').forEach(b => {
-        b.classList.toggle('active', parseInt(b.dataset.imgsz) === size);
+if ($('setting-model')) {
+    $('setting-model').addEventListener('change', (e) => {
+        pushSetting({ yolo_model: e.target.value });
     });
 }
 
-$('setting-model').addEventListener('change', (e) => {
-    const model = e.target.value;
-    const size = coreMlSizeFromName(model);
-    if (size != null) {
-        // CoreML choisi → on aligne l'imgsz sur la taille figée du modèle.
-        setActiveImgszBtn(size);
-        pushSetting({ yolo_model: model, imgsz: size });
-    } else {
-        pushSetting({ yolo_model: model });
-    }
-});
+if ($('setting-conf')) {
+    $('setting-conf').addEventListener('input', (e) => { $('setting-conf-val').textContent = parseFloat(e.target.value).toFixed(2); });
+    $('setting-conf').addEventListener('change', (e) => pushSetting({ conf: parseFloat(e.target.value) }));
+}
 
-document.querySelectorAll('[data-imgsz]').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const size = parseInt(btn.dataset.imgsz);
-        setActiveImgszBtn(size);
-        // Si le modèle courant est un CoreML, on switche aussi vers la
-        // variante correspondante (sinon on tournerait à la mauvaise shape).
-        // On PRESERVE l'archi (s ou m) — on ne rebascule pas de m vers s.
-        const curModel = $('setting-model').value;
-        const arch = coreMlArchFromName(curModel);
-        if (arch) {
-            const target = nearestCoreMlSize(size);
-            const targetName = coreMlNameFor(arch, target);
-            if (targetName !== curModel) {
-                $('setting-model').value = targetName;
-                setActiveImgszBtn(target);
-                pushSetting({ yolo_model: targetName, imgsz: target });
-                return;
-            }
-        }
-        pushSetting({ imgsz: size });
+if ($('btn-rematch')) {
+    $('btn-rematch').addEventListener('click', async () => {
+        const status = $('settings-status');
+        if (status) { status.textContent = '⏳ re-id...'; status.style.color = 'var(--amber)'; }
+        try {
+            await fetch('/api/rematch', { method: 'POST' });
+            if (status) { status.textContent = '✓ re-id demandée'; status.style.color = 'var(--accent)'; setTimeout(() => { status.textContent = ''; }, 2500); }
+        } catch (e) { if (status) { status.textContent = '✗ erreur'; status.style.color = 'var(--rose)'; } }
     });
-});
-$('setting-embed').addEventListener('input', (e) => { $('setting-embed-val').textContent = e.target.value; });
-$('setting-embed').addEventListener('change', (e) => pushSetting({ embed_every: parseInt(e.target.value) }));
-$('setting-threshold').addEventListener('input', (e) => { $('setting-threshold-val').textContent = parseFloat(e.target.value).toFixed(2); });
-$('setting-threshold').addEventListener('change', (e) => pushSetting({ threshold: parseFloat(e.target.value) }));
-$('setting-conf').addEventListener('input', (e) => { $('setting-conf-val').textContent = parseFloat(e.target.value).toFixed(2); });
-$('setting-conf').addEventListener('change', (e) => pushSetting({ conf: parseFloat(e.target.value) }));
-$('btn-rematch').addEventListener('click', async () => {
-    const status = $('settings-status');
-    status.textContent = '⏳ re-id...'; status.style.color = 'var(--amber)';
-    try {
-        await fetch('/api/rematch', { method: 'POST' });
-        status.textContent = '✓ re-id demandée'; status.style.color = 'var(--accent)';
-        setTimeout(() => { status.textContent = ''; }, 2500);
-    } catch (e) { status.textContent = '✗ erreur'; status.style.color = 'var(--rose)'; }
-});
+}
 
 // ─── Init polling ───────────────────────────────────────────────
 setInterval(refreshStats, 1000);

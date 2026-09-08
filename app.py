@@ -64,16 +64,23 @@ def parse_args():
     p.add_argument("--port", type=int, default=8100,
                    help="Port du worker Python (Bun proxy dessus sur :8000).")
     # --- Modèles ---
-    # Auto-sélection : YOLO26 MLX sur Apple Silicon (Metal GPU natif, ~26 FPS),
-    # sinon YOLO11s-seg PyTorch (MPS/CUDA/CPU).
+    # Auto-sélection du modèle à détection maximale (yolo26n.pt / CBVD-5)
     import os as _os
-    _has_mlx_model = _os.path.exists(
-        _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "yolo26s-seg.safetensors")
-    )
-    _default_yolo = "yolo26s-seg.safetensors" if _has_mlx_model else "yolo11s-seg.pt"
+    _base_dir = _os.path.dirname(_os.path.abspath(__file__))
+    _download_yolo26n = "/Volumes/Untitled/downloads/yolo26n.pt"
+    _custom_cbvd5 = _os.path.join(_base_dir, "boeuf_cbvd5_lr001", "weights", "best.pt")
+    _has_mlx_model = _os.path.exists(_os.path.join(_base_dir, "yolo26s-seg.safetensors"))
+    if _os.path.exists(_download_yolo26n):
+        _default_yolo = _download_yolo26n
+    elif _os.path.exists(_custom_cbvd5):
+        _default_yolo = _custom_cbvd5
+    elif _has_mlx_model:
+        _default_yolo = "yolo26s-seg.safetensors"
+    else:
+        _default_yolo = "yolo11s-seg.pt"
     p.add_argument("--yolo-model", type=str, default=_default_yolo,
-                   help="YOLO recommandé: yolo26s-seg.safetensors (MLX/Metal, Apple Silicon) "
-                        "ou yolo11s-seg.pt (PyTorch, CUDA/CPU).")
+                   help="Modèle YOLO: /Volumes/Untitled/downloads/yolo26n.pt (détection maximale), "
+                        "boeuf_cbvd5_lr001/weights/best.pt ou yolo26s-seg.safetensors.")
     p.add_argument("--reid-model", type=str, default="hf-hub:BVRA/MegaDescriptor-T-224",
                    help="Backbone re-ID (timm/HF hub). T-224 rapide, L-384 plus précis.")
     # --- Re-ID ---
@@ -353,9 +360,12 @@ def list_videos():
                 "source": source_tag,
             })
 
+    downloads_dir = "/Volumes/Untitled/downloads"
     _scan(samples_dir, "samples")
     _scan(project_root, "project")
     _scan(UPLOAD_DIR, "uploads")
+    if os.path.isdir(downloads_dir):
+        _scan(downloads_dir, "downloads")
     return jsonify({"videos": found})
 
 

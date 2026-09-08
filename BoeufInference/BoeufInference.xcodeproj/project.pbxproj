@@ -16,6 +16,7 @@
 		7FE00EEB0B1C7EB39798EE8E /* boeuf_cbvd5_lr001.mlpackage in Resources */ = {isa = PBXBuildFile; fileRef = F5B34821ED71BFC68FEC47D1 /* boeuf_cbvd5_lr001.mlpackage */; };
 		C2828C6ED82EDEB6B899F37D /* boeuf_yolo26s_832.mlpackage in Resources */ = {isa = PBXBuildFile; fileRef = 66B1E77C82F89497CE25F904 /* boeuf_yolo26s_832.mlpackage */; };
 		0A620D069D1D4722A9FABA4D /* yolo26n.mlpackage in Resources */ = {isa = PBXBuildFile; fileRef = 36FEF90AC1014BB2829001AC /* yolo26n.mlpackage */; };
+		D73D50EEDDD24ED0822D11E0 /* boeuf_yolo26s_832_mixed.mlpackage in Resources */ = {isa = PBXBuildFile; fileRef = B2101F1E71B54E009F94730D /* boeuf_yolo26s_832_mixed.mlpackage */; };
 		CCD5A0C4153D502D4ECBF0AE /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86B947001E3262B3017C32FB /* VideoPlayerView.swift */; };
 		D6C3C39370EB451B71B43E49 /* BoeufInferenceApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E6C0E84F47EE3A175923F2 /* BoeufInferenceApp.swift */; };
 		E533FEEF0827F9ED0D8D9A86 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03F941E76F94B05578F9D9D5 /* ContentView.swift */; };
@@ -27,6 +28,7 @@
 		207CAEAAEB4B16647DB00572 /* boeuf_cbvd5_seg.mlpackage */ = {isa = PBXFileReference; path = boeuf_cbvd5_seg.mlpackage; sourceTree = "<group>"; };
 		66B1E77C82F89497CE25F904 /* boeuf_yolo26s_832.mlpackage */ = {isa = PBXFileReference; path = boeuf_yolo26s_832.mlpackage; sourceTree = "<group>"; };
 		36FEF90AC1014BB2829001AC /* yolo26n.mlpackage */ = {isa = PBXFileReference; path = yolo26n.mlpackage; sourceTree = "<group>"; };
+		B2101F1E71B54E009F94730D /* boeuf_yolo26s_832_mixed.mlpackage */ = {isa = PBXFileReference; path = boeuf_yolo26s_832_mixed.mlpackage; sourceTree = "<group>"; };
 		7B5AD3E6C71B71C8BF34F7A0 /* BoeufInference.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BoeufInference.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		86B947001E3262B3017C32FB /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
 		8F61438D0726A27E0EF8D583 /* Detector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Detector.swift; sourceTree = "<group>"; };
@@ -76,6 +78,7 @@
 				207CAEAAEB4B16647DB00572 /* boeuf_cbvd5_seg.mlpackage */,
 				1D7477E503D74476B9DF027A /* boeuf_yolo26s_640.mlpackage */,
 				66B1E77C82F89497CE25F904 /* boeuf_yolo26s_832.mlpackage */,
+				B2101F1E71B54E009F94730D /* boeuf_yolo26s_832_mixed.mlpackage */,
 				36FEF90AC1014BB2829001AC /* yolo26n.mlpackage */,
 			);
 			path = Models;
@@ -146,6 +149,7 @@
 				0AA14173691F8EE1051E17E7 /* boeuf_yolo26s_640.mlpackage in Resources */,
 				C2828C6ED82EDEB6B899F37D /* boeuf_yolo26s_832.mlpackage in Resources */,
 				0A620D069D1D4722A9FABA4D /* yolo26n.mlpackage in Resources */,
+				D73D50EEDDD24ED0822D11E0 /* boeuf_yolo26s_832_mixed.mlpackage in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
