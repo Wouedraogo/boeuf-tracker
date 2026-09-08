@@ -20,14 +20,29 @@ pip install -r requirements.txt
 
 ## Utilisation
 
-### Interface web Next.js (shadcn + pnpm)
+### Démarrage rapide du projet
+
+Pour démarrer le projet au complet (lance le worker IA Python sur le port 8100 et le serveur Web Bun sur le port 8000 en parallèle) :
+
 ```bash
-python app.py
-cd frontend
-pnpm dev
+chmod +x dev.sh
+./dev.sh
 ```
 
-Puis ouvrir `http://localhost:3000`.
+*(Un raccourci `./deh.sh` est également disponible)*
+
+> **Détail des services démarrés :**
+> - **Interface Web (UI) :** `http://localhost:8000`
+> - **Worker IA (Python) :** `http://localhost:8100` (accélération Apple Silicon MLX activée par défaut)
+>
+> Pour arrêter l'ensemble des services, faites simplement `Ctrl + C`.
+
+#### Options de démarrage :
+```bash
+./dev.sh                             # Démarrage standard (MLX + vidéo par défaut)
+./dev.sh --source samples/demo.mp4    # Spécifier une vidéo d'entrée
+./dev.sh --source 0                  # Utiliser la webcam en direct
+```
 
 ### Mode interactif (menu)
 ```powershell

@@ -257,13 +257,10 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
-# Lancer le worker
-python app.py --mlx
-# → http://localhost:8100
-
-# App desktop
-cargo install tauri-cli --version "^2.0"
-cargo tauri dev
+# Lancer le projet au complet (Worker Python + Serveur Web Bun)
+chmod +x dev.sh
+./dev.sh
+# → UI accessible sur http://localhost:8000 et API sur http://localhost:8100
 ```
 
 ### Arguments principaux
